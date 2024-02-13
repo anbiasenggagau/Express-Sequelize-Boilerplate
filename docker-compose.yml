@@ -1,0 +1,16 @@
+version: '3'
+services:
+  postgres:
+    image: postgres:15.5
+    environment:
+      - POSTGRES_USER=anbiasenggagau
+      - POSTGRES_PASSWORD=supersecret
+    ports:
+      - 5432:5432
+  postgres_extension:
+    image: postgres:15.5
+    environment:
+      - POSTGRES_USER=anbiasenggagau
+      - POSTGRES_PASSWORD=supersecret
+    ports:
+      - 5433:5432
