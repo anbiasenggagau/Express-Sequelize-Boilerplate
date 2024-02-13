@@ -13,6 +13,7 @@
   "license": "ISC",
   "dependencies": {
     "@sequelize/core": "^7.0.0-alpha.36",
+    "bcryptjs": "^2.4.3",
     "dotenv": "^16.4.2",
     "express": "^4.18.2",
     "express-validator": "^7.0.1",
@@ -22,7 +23,9 @@
     "sequelize-typescript": "^2.1.6"
   },
   "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
     "@types/express": "^4.17.21",
+    "@types/jsonwebtoken": "^9.0.5",
     "nodemon": "^3.0.3"
   }
 }

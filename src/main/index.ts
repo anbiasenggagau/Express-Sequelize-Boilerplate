@@ -6,11 +6,8 @@ import dotenv from "dotenv"
 dotenv.config()
 
 DB.forEach((value) => {
+    value.sync({ alter: true })
     value.authenticate()
-        .then(() => {
-            console.log("Connected to " + value.getDatabaseName())
-            value.sync({ alter: true })
-        })
 })
 
 const app = express()

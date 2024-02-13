@@ -1,5 +1,4 @@
 import { TokenPayload } from "../../middleware/Authentication";
-import ErrorHandler from "../../middleware/ErrorHandler";
 import CustomersRepo from "../../model/repository/CustomersRepo";
 import { CreateAttributesBody } from "./Request";
 
@@ -11,13 +10,12 @@ class CustomersHandler {
                 Name: body.name,
                 PhoneNumber: body.phoneNumber,
                 Address: body.address,
-                Email: body.email,
+                UserId: identity.id,
                 CreatedBy: identity.id,
                 UpdatedBy: identity.id
             }
-        ).catch((error) => {
-            throw new ErrorHandler(400, error.message)
-        })
+        )
+
         return true
     }
 
@@ -26,9 +24,7 @@ class CustomersHandler {
             {
                 where: {},
             }
-        ).catch((error) => {
-            throw new ErrorHandler(400, error.message)
-        })
+        )
     }
 }
 

@@ -1,9 +1,9 @@
 import express from "express"
 import { validationResult } from "express-validator"
-import ErrorHandler from "../middleware/ErrorHandler"
+import ErrorHandler from "../utility/ErrorHandler"
 
-class BaseController {
-    public validateRequest(req: express.Request, res: express.Response) {
+abstract class BaseController {
+    public validateRequest(req: express.Request) {
         const errors = validationResult(req)
 
         if (!errors.isEmpty()) {

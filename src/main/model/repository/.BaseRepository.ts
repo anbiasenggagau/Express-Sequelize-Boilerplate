@@ -9,6 +9,12 @@ type QueryOption<T> = {
     transaction?: Transaction
 }
 
+type SingleQueryOption<T> = {
+    where: WhereOptions<T>,
+    lock?: boolean,
+    transaction?: Transaction
+}
+
 type CountOption<T> = {
     where: WhereOptions<T>
 }
@@ -41,6 +47,10 @@ abstract class BaseRepository<TModelInstance, TModelAttributes, TCreationAttribu
         return await this.model.findAll({ ...QueryOption })
     }
 
+    async getSingleData(QueryOption: SingleQueryOption<TModelAttributes>): Promise<TModelInstance | null> {
+        return await this.model.findOne({ ...QueryOption })
+    }
+
     async getAndCountData(QueryOption: QueryOption<TModelAttributes>): Promise<{ rows: TModelInstance[], count: number }> {
         return await this.model.findAndCountAll({ ...QueryOption })
     }
@@ -49,8 +59,8 @@ abstract class BaseRepository<TModelInstance, TModelAttributes, TCreationAttribu
         return await this.model.count({ ...CountOption })
     }
 
-    async updateData(CreationAttributes: TCreationAttributes, UpdateOption: UpdateOption<TModelAttributes>) {
-        await this.model.update({ ...CreationAttributes }, { ...UpdateOption })
+    async updateData(CreationAttributes: Partial<TCreationAttributes>, UpdateOption: UpdateOption<TModelAttributes>): Promise<[affectedCount: number, affectedRows: TModelInstance[]]> {
+        return await this.model.update({ ...CreationAttributes }, { ...UpdateOption })
     }
 
     async deleteData(DeleteOption: DeleteOption<TModelAttributes>) {
