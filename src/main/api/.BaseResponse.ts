@@ -1,7 +1,9 @@
 import express from "express"
+import { ValidationError } from "express-validator"
+import { StatusCode } from "../const"
 
-class BaseResponse {
-    static OKWithEmptyData(message: string, response: express.Response) {
+abstract class BaseResponse {
+    OKWithEmptyData(message: string, response: express.Response) {
         const finalResponse = {
             message,
             statusCode: 200
@@ -10,7 +12,7 @@ class BaseResponse {
         response.status(200).json(finalResponse)
     }
 
-    static OKWithData<T>(message: string, data: T, response: express.Response) {
+    OKWithData<T>(message: string, data: T, response: express.Response) {
         const finalResponse = {
             message,
             statusCode: 200,
@@ -20,7 +22,7 @@ class BaseResponse {
         response.status(200).json(finalResponse)
     }
 
-    static OKWithDataPagination<T>(message: string, data: T[], pagination: { currentPage: number, pageSize: number }, dataTotal: number, response: express.Response) {
+    OKWithDataPagination<T>(message: string, data: T[], pagination: { currentPage: number, pageSize: number }, dataTotal: number, response: express.Response) {
         const paginationResult = this.constructPagination(pagination, dataTotal)
 
         const finalResponse = {
@@ -33,7 +35,7 @@ class BaseResponse {
         response.status(200).json(finalResponse)
     }
 
-    static CreatedNewData(message: string, response: express.Response) {
+    CreatedNewData(message: string, response: express.Response) {
         const finalResponse = {
             message,
             statusCode: 201
@@ -42,7 +44,8 @@ class BaseResponse {
         response.status(201).json(finalResponse)
     }
 
-    static NotFound(message: string, response: express.Response) {
+
+    NotFound(message: string, response: express.Response) {
         const finalResponse = {
             message,
             statusCode: 404,
@@ -51,7 +54,7 @@ class BaseResponse {
         response.status(404).json(finalResponse)
     }
 
-    static BadRequest(message: string, response: express.Response) {
+    BadRequest(message: string, response: express.Response) {
         const finalResponse = {
             message,
             statusCode: 400,
@@ -60,7 +63,7 @@ class BaseResponse {
         response.status(400).json(finalResponse)
     }
 
-    static ErrorValidation<T>(data: T[], response: express.Response) {
+    ErrorValidation(data: ValidationError[], response: express.Response) {
         const finalResponse = {
             message: "Error Validation",
             statusCode: 400,
@@ -70,21 +73,41 @@ class BaseResponse {
         response.status(400).json(finalResponse)
     }
 
-    static Unauthorized(response: express.Response) {
+    Unauthorized(response: express.Response) {
         response.sendStatus(401)
     }
 
-    static Forbidden(response: express.Response) {
+    Forbidden(response: express.Response) {
         response.sendStatus(403)
     }
 
-    static getLastPage(dataTotal: number, pageSize: number): number {
+    InternalServerError(response: express.Response) {
+        response.status(500).json({
+            message: "Internal error occured, please contact administrator",
+            statusCode: 500
+        })
+    }
+
+    SendOnlyStatusCode(statusCode: StatusCode, response: express.Response) {
+        response.sendStatus(statusCode)
+    }
+
+    handleErrorStatusCode(statusCode: StatusCode, message: string, response: express.Response, errorValidationList?: ValidationError[]) {
+        if (statusCode == 400 && errorValidationList) this.ErrorValidation(errorValidationList, response)
+        else if (statusCode == 400 && !errorValidationList) this.BadRequest(message, response)
+        else if (statusCode == 404) this.NotFound(message, response)
+        else if (statusCode == 401) this.Unauthorized(response)
+        else if (statusCode == 403) this.Forbidden(response)
+        else this.SendOnlyStatusCode(statusCode, response)
+    }
+
+    getLastPage(dataTotal: number, pageSize: number): number {
         let result = dataTotal / pageSize
         if (result % pageSize == 0 && result != 0) return result
         else return parseInt(result.toString()) + 1
     }
 
-    static constructPagination(pagination: { currentPage: number, pageSize: number }, dataTotal: number) {
+    constructPagination(pagination: { currentPage: number, pageSize: number }, dataTotal: number) {
         let from = 1
         let to = (pagination.currentPage * pagination.pageSize)
 

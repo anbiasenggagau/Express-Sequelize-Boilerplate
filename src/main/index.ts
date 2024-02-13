@@ -5,7 +5,6 @@ import DB from "./config/DBConfig"
 import dotenv from "dotenv"
 dotenv.config()
 
-
 DB.forEach((value) => {
     value.authenticate()
         .then(() => {
@@ -22,6 +21,7 @@ app.get("/", (req: Request, res: Response) => {
     return res.send("Connected to server")
 })
 
+// Route Assignment
 router.forEach(value => {
     app.use(value)
 })

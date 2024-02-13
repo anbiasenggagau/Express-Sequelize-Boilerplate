@@ -1,14 +1,18 @@
-import { ValidationChain, validationResult } from "express-validator";
-import express from "express"
+import { ValidationError } from "express-validator"
+import { StatusCode } from "../const"
 
-function errorHandler(ValidationList: ValidationChain[]) {
-    return (req: express.Request, res: express.Response, next: express.NextFunction) => {
-        const errors = validationResult(req)
+class ErrorHandler extends Error {
+    statusCode: StatusCode
+    message: string
+    errorValidationList?: ValidationError[] = []
 
-        if (!errors.isEmpty()) {
-            return res.sendStatus(400)
-        }
-
-        next()
+    // errorValidationList only apply for validating Body Request using express-validator
+    constructor(statusCode: StatusCode, message?: string, errorValidationList?: ValidationError[]) {
+        super()
+        this.message = message ?? ""
+        this.statusCode = statusCode
+        this.errorValidationList = errorValidationList
     }
 }
+
+export default ErrorHandler

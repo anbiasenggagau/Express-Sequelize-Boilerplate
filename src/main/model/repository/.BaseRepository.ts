@@ -27,33 +27,33 @@ type DeleteOption<T> = {
     transaction?: Transaction
 }
 
-abstract class BaseRepository<T, ModelAttributes, CreationAttributes,> {
+abstract class BaseRepository<TModelInstance, TModelAttributes, TCreationAttributes,> {
     private model: any
-    constructor(modelProperties: T) {
+    constructor(modelProperties: TModelInstance) {
         this.model = modelProperties
     }
 
-    async insertNewData(CreationAttributes: CreationAttributes, CreateOption?: CreateOption) {
+    async insertNewData(CreationAttributes: TCreationAttributes, CreateOption?: CreateOption) {
         await this.model.create({ ...CreationAttributes }, { ...CreateOption, validate: true })
     }
 
-    async getAllData(QueryOption: QueryOption<ModelAttributes>): Promise<T[]> {
+    async getAllData(QueryOption: QueryOption<TModelAttributes>): Promise<TModelInstance[]> {
         return await this.model.findAll({ ...QueryOption })
     }
 
-    async getAndCountData(QueryOption: QueryOption<ModelAttributes>): Promise<{ rows: T[], count: number }> {
+    async getAndCountData(QueryOption: QueryOption<TModelAttributes>): Promise<{ rows: TModelInstance[], count: number }> {
         return await this.model.findAndCountAll({ ...QueryOption })
     }
 
-    async getCountData(CountOption: CountOption<ModelAttributes>): Promise<number> {
+    async getCountData(CountOption: CountOption<TModelAttributes>): Promise<number> {
         return await this.model.count({ ...CountOption })
     }
 
-    async updateData(CreationAttributes: CreationAttributes, UpdateOption: UpdateOption<ModelAttributes>) {
+    async updateData(CreationAttributes: TCreationAttributes, UpdateOption: UpdateOption<TModelAttributes>) {
         await this.model.update({ ...CreationAttributes }, { ...UpdateOption })
     }
 
-    async deleteData(DeleteOption: DeleteOption<ModelAttributes>) {
+    async deleteData(DeleteOption: DeleteOption<TModelAttributes>) {
         await this.model.destroy({ ...DeleteOption })
     }
 }

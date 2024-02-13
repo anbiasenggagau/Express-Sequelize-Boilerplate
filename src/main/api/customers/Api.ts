@@ -2,15 +2,15 @@ import express from "express"
 import { CreateAttributesBody, createAttributesValidation } from "./Request"
 import { TokenPayload } from "../../middleware/Authentication"
 import CustomersHandler from "./Handler"
-import BaseResponse from "../.BaseResponse"
 import BaseController from "../.BaseController"
 import CustomersResponse from "./Response"
+import ErrorHandler from "../../middleware/ErrorHandler"
 
 const app = express.Router()
 
 class CustomersController extends BaseController {
     private handler = new CustomersHandler()
-    private response = CustomersResponse
+    private response = new CustomersResponse()
 
     router() {
         app.post("/customers", createAttributesValidation, async (req: express.Request, res: express.Response) => {
@@ -21,9 +21,12 @@ class CustomersController extends BaseController {
 
                 await this.handler.handleCreateCustomer(identity, body)
                 return this.response.CreatedNewData("Success", res)
-            } catch (error: any) {
+            } catch (error) {
                 console.log(error)
-                return this.response.BadRequest("Error Occured : " + error.message, res)
+                if (error instanceof ErrorHandler)
+                    return this.response.handleErrorStatusCode(error.statusCode, error.message, res, error.errorValidationList)
+                else
+                    return this.response.InternalServerError(res)
             }
         })
 
@@ -32,10 +35,13 @@ class CustomersController extends BaseController {
                 const identity: TokenPayload = req.user
 
                 const result = await this.handler.handleGetAllCustomers(identity)
-                return CustomersResponse.OKWithData("Success", result, res)
-            } catch (error: any) {
+                return this.response.OKWithData("Success", result, res)
+            } catch (error) {
                 console.log(error)
-                return BaseResponse.BadRequest("Error Occured : " + error.message, res)
+                if (error instanceof ErrorHandler)
+                    return this.response.handleErrorStatusCode(error.statusCode, error.message, res, error.errorValidationList)
+                else
+                    return this.response.InternalServerError(res)
             }
         })
 
