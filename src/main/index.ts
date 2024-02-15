@@ -3,6 +3,7 @@ import config from "./config/GeneralConfig"
 import router from "./routes"
 import DB from "./config/DBConfig"
 import dotenv from "dotenv"
+import { handleError } from "./middleware/ErrorHandler"
 dotenv.config()
 
 DB.forEach((value) => {
@@ -22,6 +23,9 @@ app.get("/", (req: Request, res: Response) => {
 router.forEach(value => {
     app.use(value)
 })
+
+// Custom Error Handler
+app.use(handleError)
 
 app.listen(config.SERVER_PORT, () => {
     console.log("Listen to port 3000")

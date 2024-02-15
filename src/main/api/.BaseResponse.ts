@@ -2,7 +2,7 @@ import express from "express"
 import { ValidationError } from "express-validator"
 import { StatusCode } from "../const"
 
-abstract class BaseResponse {
+class BaseResponse {
     OKWithEmptyData(message: string, response: express.Response) {
         const finalResponse = {
             message,

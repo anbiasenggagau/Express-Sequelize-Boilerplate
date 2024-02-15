@@ -1,6 +1,6 @@
 import express from "express"
 import { validationResult } from "express-validator"
-import ErrorHandler from "../utility/ErrorHandler"
+import ErrorHandler from "../middleware/ErrorHandler"
 
 abstract class BaseController {
     public validateRequest(req: express.Request) {

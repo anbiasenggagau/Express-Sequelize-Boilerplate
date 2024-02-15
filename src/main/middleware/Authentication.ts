@@ -6,7 +6,6 @@ export interface TokenPayload {
     id: string
     username: string
     exp: number
-    iss: string
 }
 
 export function authenticate(req: express.Request, res: express.Response, next: express.NextFunction) {
@@ -18,6 +17,7 @@ export function authenticate(req: express.Request, res: express.Response, next: 
     jwt.verify(token, configData.JWT_SECRET, async (err, user) => {
         if (err) return res.sendStatus(403)
         req.user = user
+        console.log(user)
         next()
     })
 

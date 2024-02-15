@@ -2,7 +2,7 @@ import UsersRepo from "../../model/repository/UsersRepo"
 import bcrypt from "bcryptjs"
 import jwt from "jsonwebtoken"
 import { LoginAttributeBody } from "./Request"
-import ErrorHandler from "../../utility/ErrorHandler"
+import ErrorHandler from "../../middleware/ErrorHandler"
 import configData from "../../config/GeneralConfig"
 
 class AuthHandler {
@@ -22,7 +22,7 @@ class AuthHandler {
         const checkPassword = bcrypt.compareSync(body.password, result.Password)
         if (!checkPassword) throw new ErrorHandler(400, "Wrong password")
 
-        return jwt.sign({ id: result.Id, username: result.Username }, configData.JWT_SECRET)
+        return jwt.sign({ id: result.Id, username: result.Username }, configData.JWT_SECRET, { expiresIn: "30m" })
     }
 }
 
