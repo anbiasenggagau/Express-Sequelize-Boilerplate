@@ -4,6 +4,7 @@ import router from "./routes"
 import DB from "./config/DBConfig"
 import dotenv from "dotenv"
 import { handleError } from "./middleware/ErrorHandler"
+import { handleLogging } from "./middleware/Logging"
 dotenv.config()
 
 DB.forEach((value) => {
@@ -14,6 +15,7 @@ DB.forEach((value) => {
 const app = express()
 app.use(express.urlencoded({ extended: true }))
 app.use(express.json({ limit: "5mb" }))
+app.use(handleLogging)
 
 app.get("/", (req: Request, res: Response) => {
     return res.send("Connected to server")
