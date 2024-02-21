@@ -1,5 +1,5 @@
 import express from "express"
-import { CreateAttributesBody, createAttributesValidation } from "./Request"
+import { CreateAttributesBody, UpdateAttributesBody, createAttributesValidation, updateAttributesValidation } from "./Request"
 import { TokenPayload } from "../../middleware/Authentication"
 import CustomersHandler from "./Handler"
 import BaseController from "../.BaseController"
@@ -30,6 +30,19 @@ class CustomersController extends BaseController {
                 const identity: TokenPayload = req.user
 
                 const result = await this.handler.handleGetAllCustomers(identity)
+                return this.response.OKWithData("Success", result, res)
+            } catch (error) {
+                next(error)
+            }
+        })
+
+        app.put("/customers", updateAttributesValidation, async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+            try {
+                super.validateRequest(req)
+                const identity: TokenPayload = req.user
+                const body: UpdateAttributesBody = { ...req.body }
+
+                const result = await this.handler.handleUpdateCustomers(identity, body)
                 return this.response.OKWithData("Success", result, res)
             } catch (error) {
                 next(error)

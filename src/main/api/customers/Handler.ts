@@ -1,6 +1,6 @@
 import { TokenPayload } from "../../middleware/Authentication";
-import CustomersRepo from "../../model/repository/CustomersRepo";
-import { CreateAttributesBody } from "./Request";
+import CustomersRepo from "../../model/repository/MainRepository/CustomersRepo";
+import { CreateAttributesBody, UpdateAttributesBody } from "./Request";
 
 class CustomersHandler {
     private Repository = CustomersRepo
@@ -25,6 +25,22 @@ class CustomersHandler {
                 where: {},
             }
         )
+    }
+
+    async handleUpdateCustomers(identity: TokenPayload, body: UpdateAttributesBody) {
+        await this.Repository.updateData({
+            Address: body.address,
+            Name: body.name,
+            PhoneNumber: body.phoneNumber,
+            UpdatedBy: identity.id
+        },
+            {
+                where: {
+                    UserId: identity.id
+                }
+            })
+
+        return true
     }
 }
 

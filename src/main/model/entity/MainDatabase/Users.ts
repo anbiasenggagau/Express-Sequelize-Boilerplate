@@ -49,10 +49,10 @@ class Users extends Model<UsersAttributes | UsersCreationAttributes> implements 
     })
     Password!: string
 
-    @HasOne(() => Customers, "UserId")
+    @HasOne(() => Customers, { foreignKey: "UserId", sourceKey: "Id", onDelete: "CASCADE" })
     Customer!: Customers
 
-    @HasOne(() => Stores, "UserId")
+    @HasOne(() => Stores, { foreignKey: "UserId", sourceKey: "Id", onDelete: "CASCADE" })
     Store!: Stores
 }
 

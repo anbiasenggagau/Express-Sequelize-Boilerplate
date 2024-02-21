@@ -81,7 +81,7 @@ class Products extends Model<ProductsAttributes | ProductsCreationAttributes> im
     })
     UpdatedAt!: Date
 
-    @BelongsTo(() => Stores, "StoreId")
+    @BelongsTo(() => Stores, { foreignKey: "StoreId", targetKey: "Id", onDelete: "CASCADE" })
     Store!: Stores
 }
 

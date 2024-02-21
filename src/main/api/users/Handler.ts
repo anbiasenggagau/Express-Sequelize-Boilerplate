@@ -1,8 +1,9 @@
-import UsersRepo from "../../model/repository/UsersRepo";
+import UsersRepo from "../../model/repository/MainRepository/UsersRepo";
 import { CreateAttributesBody, UpdateAttributesBody } from "./Request";
 import configData from "../../config/GeneralConfig"
 import bcrypt from "bcryptjs"
-import { TokenPayload } from "../../middleware/Authentication";
+import { TokenPayload, insertBlockedToken } from "../../middleware/Authentication";
+import ErrorHandler from "../../middleware/ErrorHandler";
 
 class UsersHandler {
     private Repository = UsersRepo
@@ -18,10 +19,12 @@ class UsersHandler {
     }
 
     async handleUpdateUser(identity: TokenPayload, body: UpdateAttributesBody) {
-        await this.Repository.updateData(
+        const password = body.password ? bcrypt.hashSync(body.password, configData.ENCRYPTION_SALT) : undefined
+
+        const result = await this.Repository.updateData(
             {
                 Email: body.email,
-                Password: bcrypt.hashSync(body.password!, configData.ENCRYPTION_SALT),
+                Password: password,
                 Username: body.username
             },
             {
@@ -31,15 +34,20 @@ class UsersHandler {
             }
         )
 
+        if (result[0] == 0) throw new ErrorHandler(404, "User not found")
+
         return true
     }
 
     async handleDeleteUser(identity: TokenPayload) {
-        await this.Repository.deleteData({
+        const result = await this.Repository.deleteData({
             where: {
                 Id: identity.id
             }
         })
+
+        if (result == 0) throw new ErrorHandler(404, "User not found or already deleted")
+        await insertBlockedToken(identity)
 
         return true
     }

@@ -63,8 +63,8 @@ abstract class BaseRepository<TModelInstance, TModelAttributes, TCreationAttribu
         return await this.model.update({ ...CreationAttributes }, { ...UpdateOption })
     }
 
-    async deleteData(DeleteOption: DeleteOption<TModelAttributes>) {
-        await this.model.destroy({ ...DeleteOption })
+    async deleteData(DeleteOption: DeleteOption<TModelAttributes>): Promise<number> {
+        return await this.model.destroy({ ...DeleteOption })
     }
 }
 

@@ -70,10 +70,10 @@ class Stores extends Model<StoresAttributes | StoresCreationAttributes> implemen
     })
     UpdatedBy!: string
 
-    @BelongsTo(() => Users, "UserId")
+    @BelongsTo(() => Users, { foreignKey: "UserId", targetKey: "Id", onDelete: "CASCADE" })
     User!: Users
 
-    @HasOne(() => Products, "StoreId")
+    @HasOne(() => Products, { foreignKey: "StoreId", sourceKey: "Id", onDelete: "CASCADE" })
     Product!: Products
 }
 

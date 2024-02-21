@@ -82,7 +82,7 @@ class Customers extends Model<CustomersAttributes | CustomersCreationAttributes>
     })
     UpdatedAt!: Date
 
-    @BelongsTo(() => Users, "UserId")
+    @BelongsTo(() => Users, { foreignKey: "UserId", targetKey: "Id", onDelete: "CASCADE" })
     User!: Users
 }
 
