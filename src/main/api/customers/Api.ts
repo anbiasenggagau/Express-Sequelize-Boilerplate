@@ -42,8 +42,8 @@ class CustomersController extends BaseController {
                 const identity: TokenPayload = req.user
                 const body: UpdateAttributesBody = { ...req.body }
 
-                const result = await this.handler.handleUpdateCustomers(identity, body)
-                return this.response.OKWithData("Success", result, res)
+                await this.handler.handleUpdateCustomers(identity, body)
+                return this.response.OKWithEmptyData("Success", res)
             } catch (error) {
                 next(error)
             }

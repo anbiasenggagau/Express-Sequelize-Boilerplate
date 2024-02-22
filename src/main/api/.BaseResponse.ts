@@ -92,6 +92,14 @@ class BaseResponse {
         response.sendStatus(statusCode)
     }
 
+    SendCustomResponse(statusCode: StatusCode, message: string, response: express.Response, data?: any) {
+        response.status(statusCode).json({
+            message,
+            statusCode,
+            data
+        })
+    }
+
     handleErrorStatusCode(statusCode: StatusCode, message: string, response: express.Response, errorValidationList?: ValidationError[]) {
         if (statusCode == 400 && errorValidationList) this.ErrorValidation(errorValidationList, response)
         else if (statusCode == 400 && !errorValidationList) this.BadRequest(message, response)
@@ -101,13 +109,13 @@ class BaseResponse {
         else this.SendOnlyStatusCode(statusCode, response)
     }
 
-    getLastPage(dataTotal: number, pageSize: number): number {
+    protected getLastPage(dataTotal: number, pageSize: number): number {
         let result = dataTotal / pageSize
         if (result % pageSize == 0 && result != 0) return result
         else return parseInt(result.toString()) + 1
     }
 
-    constructPagination(pagination: { currentPage: number, pageSize: number }, dataTotal: number) {
+    protected constructPagination(pagination: { currentPage: number, pageSize: number }, dataTotal: number) {
         let from = 1
         let to = (pagination.currentPage * pagination.pageSize)
 
@@ -118,8 +126,8 @@ class BaseResponse {
             pageNumber: pagination.currentPage,
             pageSize: pagination.pageSize,
             totalPages: this.getLastPage(dataTotal, pagination.pageSize),
-            itemFrom: from,
-            itemTo: to,
+            fromItem: from,
+            toItem: to,
             totalItem: dataTotal
         }
     }

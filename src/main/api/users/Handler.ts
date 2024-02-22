@@ -53,11 +53,18 @@ class UsersHandler {
     }
 
     async handleGetSingleUser(identity: TokenPayload) {
-        return await this.Repository.getSingleData({
+        const result = await this.Repository.getSingleData({
             where: {
                 Id: identity.id
             }
         })
+
+        return {
+            id: result?.Id,
+            email: result?.Email,
+            username: result?.Username,
+            createdAt: result?.CreatedAt
+        }
     }
 }
 

@@ -3,6 +3,8 @@ import dotenv from "dotenv"
 dotenv.config()
 
 class MemCache {
+    private client: RedisClientType<any, any, any> | null = null
+
     async authenticate() {
         try {
             const data = await createClient({
@@ -21,9 +23,10 @@ class MemCache {
                 .connect()
 
             console.log("Redis Client Connected")
-
+            this.client = data
             return data
         } catch (error) {
+            this.client = null
             return null
         }
     }
