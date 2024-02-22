@@ -1,4 +1,4 @@
-import { body } from "express-validator";
+import { body, query } from "express-validator";
 
 export const createAttributesValidation = [
     body("name")
@@ -19,6 +19,13 @@ export const updateAttributeValidation = [
     body("currency")
         .optional()
         .isIn(["IDR", "USD"]),
+    query("id")
+        .exists()
+]
+
+export const deleteValidation = [
+    query("id")
+        .exists()
 ]
 
 export type CreateAttributeBody = {

@@ -8,8 +8,10 @@ import { handleLogging } from "./middleware/Logging"
 dotenv.config()
 
 DB.forEach((value) => {
-    value.sync({ alter: true })
     value.authenticate()
+
+    // Only implement on development environment
+    // value.sync({ alter: true })
 })
 
 const app = express()

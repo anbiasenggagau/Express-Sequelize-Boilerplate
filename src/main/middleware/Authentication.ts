@@ -7,6 +7,7 @@ export interface TokenPayload {
     id: string
     username: string
     exp: number
+    iat: number
 }
 
 export function authenticate(req: express.Request, res: express.Response, next: express.NextFunction) {
@@ -16,11 +17,12 @@ export function authenticate(req: express.Request, res: express.Response, next: 
     if (token == null) return res.sendStatus(401)
 
     jwt.verify(token, configData.JWT_SECRET, async (err, user) => {
-        if (err) return res.sendStatus(403)
+        if (err) return res.status(403).json({ message: err.message })
         req.user = user
 
-        const blocked = await MemCacheUtility.Get(req.user.id)
-        if (blocked != null) return res.sendStatus(401)
+        const blocked = await getBlockedToken(req.user)
+        if (blocked != null)
+            return res.status(403).json({ message: "jwt expired" })
 
         next()
     })
@@ -29,13 +31,17 @@ export function authenticate(req: express.Request, res: express.Response, next: 
 export async function insertBlockedToken(identity: TokenPayload) {
     MemCacheUtility.SetExpiredAt(
         {
-            key: identity.id,
-            value: identity.id,
+            key: identity.id + identity.iat.toString(),
+            value: identity.iat.toString(),
             expiredAt: identity.exp
         }
     )
 }
 
-export async function removeBlockedToken(id: string) {
-    MemCacheUtility.Delete(id)
+export async function removeBlockedToken(identity: TokenPayload) {
+    MemCacheUtility.Delete(identity.id + identity.iat.toString())
+}
+
+export async function getBlockedToken(identity: TokenPayload) {
+    return await MemCacheUtility.Get(identity.id + identity.iat.toString())
 }

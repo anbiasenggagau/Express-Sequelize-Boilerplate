@@ -2,14 +2,14 @@ import { RedisClientType } from "redis";
 import MemCache from "../config/MemCacheConfig";
 
 class MemCacheUtility {
-    public client: RedisClientType | null = null
+    public client: RedisClientType<any, any, any> | null = null
 
     constructor(MemCacheInstance: MemCache) {
         this.init(MemCacheInstance)
     }
 
     async init(MemCacheInstance: MemCache) {
-        this.client = await MemCacheInstance.authenticate() as any
+        this.client = await MemCacheInstance.authenticate()
     }
 
     async SetEx(
