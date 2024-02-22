@@ -1,0 +1,216 @@
+# ExpressJS & Sequelize Boilerplate
+
+A starter project to speed up development of Backend Service. The point of this starter project is to prioritize the type of each variable in order to decrease ambiguity while develop the Backend Service. Every function will require exact time along with its auto complete parameter.  
+
+What is built in this starter:
+- Built in TypeScript
+- Entity-Repository pattern to retrieve data from database using Sequelize
+- JWT Authentication mechanism
+- Auto invalidate JWT Token when logged out
+- Custome error handler that meets with how HTTP Codes are should be represent
+- Ready to use of pagination method
+- Auto log every request to logging database
+
+## Installation
+To test it out you would need some Database Service and Redis Cache. So, in order to start use it, make sure you have all of these services started. However, I already setup docker compose so you can build these services in a single command on your local computer.
+
+```bash
+docker compose up
+```  
+> in case you're not using services built from docker compose and somehow Redis is not available, then Auto invalidate JWT Token won't worked out.
+## Quick Start
+Fork this repository 
+> In the future I will develop npx command to generate the boilerplate without have to manually fork it.
+
+then run command
+```bash
+npm install
+npm run start
+```
+or run this command to use nodemon.
+```bash
+npm run dev
+```
+
+## Environment Variables
+
+The environment variables template can be found in the `.env.example` file. freely generate to new `.env` file. They come with these default values:
+
+```bash
+NODE_ENV=development
+SERVER_PORT=3000
+
+MAIN_DB_HOST=127.0.0.1
+MAIN_DB_PORT=5432
+MAIN_DB_NAME=postgres
+MAIN_DB_USERNAME=anbiasenggagau
+MAIN_DB_PASSWORD=supersecret
+MAIN_DB_ENGINE=postgres
+
+EXTENSION_DB_HOST=127.0.0.1
+EXTENSION_DB_PORT=5433
+EXTENSION_DB_NAME=postgres
+EXTENSION_DB_USERNAME=anbiasenggagau
+EXTENSION_DB_PASSWORD=supersecret
+EXTENSION_DB_ENGINE=postgres
+
+MONGODB_HOST=127.0.0.1
+MONGODB_PORT=5432
+MONGODB_USERNAME=anbiasenggagau
+MONGODB_PASSWORD=supersecret
+
+REDIS_HOST=127.0.0.1
+REDIS_PORT=6379
+REDIS_USERNAME=anbiasenggagau
+REDIS_PASSWORD=supersecret
+
+JWT_SECRET=supersecret
+ENCRYPTION_SALT=10
+```
+
+## Project Structure
+```
+src\main\
+|--api\                         # Environment variables and configuration related things
+    |--service-name             # Example like "auth", "users", etc
+        |--Api.ts               # Controller Layer
+        |--Handler.ts           # List of handler method for each Controller endpoint
+        |--Request.ts           # List of Request Validation using express-validator and Type of the request
+        |--Response.ts          # List of custom response you would implement
+    |--.BaseController.ts       # Contains request validator method
+    |--.BaseRequest.ts          # Contains Request Validation of pagination using express-validator and type of the pagination object
+    |--.BaseResponse.ts         # Contains predefined of common response such as Not Found, OK and also pagination method
+|--config\                      # Environment variables and some configs
+|--middleware\                  # Express middleware
+|--model\
+    |--entity\                  # Entity object of defined table in database
+    |--repository\              # Repository class to define how the data to be retrieved
+        |---.BaseRepository.ts  # Predefined method so you want keep refined same method of each repository class
+|--utility                      # Utility and helper methods
+|--const.ts                     # List of defined constant
+|--index.ts                     # App entry point
+|--router.ts                    # Route Management
+|--types.d.ts                   # Additional built in types
+```
+
+## Error Handler
+I already created custom error handler which locaten in ``./src/main/middleware/ErrorHandler.ts``. so anytime something goes wrong you can call
+```javascript
+throw new ErrorHandler({{Status Code}}, {{Message Error}})
+```
+And in controller, make sure you call next function and pass error object like this
+```javascript
+app.post("/users", createAttributesValidation, async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+            try {
+                ...
+            } catch (error) {
+                next(error)
+            }
+        })
+```
+In case unexpected error is occured, then it will automatically send internal server error without expose the system error.
+
+## Model
+Model is consist of 2 component of Entity and Repository. In this example, I created use case if there are 2 seperated databases, but you can change it into single folder if you only use single database.
+### Entity
+Entity is a table instance on database. To make things keep consistent, please follow this pattern everytime you want to make new entity
+```javascript
+interface UsersAttributes {}
+
+type UsersAutoGeneratedAttributes = "Id" | "CreatedAt" | "UpdatedAt"
+type UsersCreationAttributes = Omit<UsersAttributes, UsersAutoGeneratedAttributes>
+
+class Users extends Model<UsersAttributes | UsersCreationAttributes> implements UsersAttributes {}
+
+export default Users
+```
+- define all column of the table
+- define all column who has auto generated value
+- define creation attributes by using Omit to avoid users create manually generate auto generated column
+- create a class by follow configuration of above code
+- export default of that class
+
+### Repository
+Repository Class consist list of all method of how the data will be retrieved from the database. each entity has its own repository.
+I already created abstract class which contain common repository method so you won't have to keep create same method everytime new repository is generated. This abstract class is located in ``./src/main/model/repository/.BaseRepository.ts``.  
+
+To inherit this ``.BaseRepository`` you can refer this code
+```javascript
+class UsersRepo extends BaseRepository<Users, UsersAttributes, UsersCreationAttributes>{
+
+}
+
+export default new UsersRepo(Users as any)
+```
+in this class, you will define custom method only in special case of this repository.
+
+## Response
+
+In ``./src/main/api/.BaseResponse.ts``, you can find predefined response. To make things keep consistent, please follow code below in ``Response.ts`` file.
+
+```javascript
+import BaseResponse from "../.BaseResponse";
+
+class UsersResponse extends BaseResponse { }
+
+export default UsersResponse
+```
+
+This class will contain custom response only in special case of this controller.  
+In ``Api.ts`` initiate response of the controller
+
+```javascript
+import ProductsResponse from "./Response"
+
+class UsersController extends BaseController {
+    private response = new UsersResponse()
+}
+```
+
+## Pagination
+In ``./src/main/api/.BaseRequest.ts``, you can find paginationValidation and paginationType. It contains pagination validation to validate query of ``page`` and ``page_size``. After you retrieve the data, just simple call method OKWithDataPagination like below code
+```javascript
+class ProductsController extends BaseController {
+    private response = new ProductsResponse()
+
+    app.get("/products", paginationValidation, async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+        try {
+            const pagination: paginationType = {
+                page: req.query.page ? parseInt(req.query.page as string) : 1,
+                pageSize: req.query.page_size ? parseInt(req.query.page_size as string) : 10
+            }
+
+            const result = await this.handler.handleGetAllProducts(pagination)
+            return this.response.OKWithDataPagination(
+                "Success",
+                result.rows,
+                {
+                    currentPage: pagination.page,
+                    pageSize: pagination.pageSize
+                },
+                result.count,
+                res
+            )
+        } catch (error) {
+            next(error)
+        }
+    })
+}
+
+```
+
+This method will require parameter of
+- Message response
+- Retrieved data
+- Current page and page size
+- How many retrieved data
+- express.Response object
+
+## Contributing
+
+Pull requests are welcome. For major changes, please open an issue first
+to discuss what you would like to change.
+
+## License
+
+[ISC](https://choosealicense.com/licenses/isc/)
