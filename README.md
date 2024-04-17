@@ -1,6 +1,6 @@
 # ExpressJS & Sequelize Boilerplate
 
-A starter project to speed up development of Backend Service. The point of this starter project is to prioritize the type of each variable in order to decrease ambiguity while develop the Backend Service. Every function will require exact time along with its auto complete parameter.  
+A starter project to speed up development of Backend Service. The point of this starter project is to prioritize the type of each variable in order to decrease ambiguity while develop the Backend Service. Every function will require exact type along with its auto complete parameter.  
 
 What is built in this starter:
 - Built in TypeScript

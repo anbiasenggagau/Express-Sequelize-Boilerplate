@@ -2,6 +2,7 @@ version: '3'
 services:
   postgres:
     image: postgres:15.5
+    container_name: postgres
     environment:
       - POSTGRES_USER=anbiasenggagau
       - POSTGRES_PASSWORD=supersecret
@@ -9,6 +10,7 @@ services:
       - 5432:5432
   postgres_extension:
     image: postgres:15.5
+    container_name: postgres_extension
     environment:
       - POSTGRES_USER=anbiasenggagau
       - POSTGRES_PASSWORD=supersecret
@@ -16,6 +18,7 @@ services:
       - 5433:5432
   redis:
     image: redis:7.2.4
+    container_name: redis
     command: redis-server --requirepass supersecret
     ports:
       - 6379:6379
