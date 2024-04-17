@@ -9,7 +9,7 @@ class SessionUtility {
             let tokenNumber: number[] = []
             const identity = user as TokenPayload
 
-            // Only allow 1 session per user
+            // Only allow certain sessions
             const keys = await MemCacheUtility.GetKeysFromPattern("login" + identity.id + "=>")
             if (keys) {
                 tokenNumber = keys.map(value => parseInt(value.split("=>")[1]))
@@ -33,7 +33,6 @@ class SessionUtility {
                     expiredAt: identity.exp
                 })
             }
-
         })
     }
 
