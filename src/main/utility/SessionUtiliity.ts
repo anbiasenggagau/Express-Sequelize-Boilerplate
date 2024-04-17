@@ -10,7 +10,7 @@ class SessionUtility {
             const identity = user as TokenPayload
 
             // Only allow certain sessions
-            const keys = await MemCacheUtility.GetKeysFromPattern("login" + identity.id + "=>")
+            const keys = await MemCacheUtility.GetKeysFromPattern("login" + identity.id + "=>*")
             if (keys) {
                 tokenNumber = keys.map(value => parseInt(value.split("=>")[1]))
 
