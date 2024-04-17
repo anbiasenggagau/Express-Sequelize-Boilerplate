@@ -19,7 +19,7 @@ class CustomersController extends BaseController {
                 const identity: TokenPayload = req.user
 
                 await this.handler.handleCreateCustomer(identity, body)
-                return this.response.CreatedNewData("Success", res)
+                return this.response.CreatedNewData(res, "Success")
             } catch (error) {
                 next(error)
             }
@@ -30,7 +30,7 @@ class CustomersController extends BaseController {
                 const identity: TokenPayload = req.user
 
                 const result = await this.handler.handleGetAllCustomers(identity)
-                return this.response.OKWithData("Success", result, res)
+                return this.response.OKWithData(res, "Success", result)
             } catch (error) {
                 next(error)
             }
@@ -43,7 +43,7 @@ class CustomersController extends BaseController {
                 const body: UpdateAttributesBody = { ...req.body }
 
                 await this.handler.handleUpdateCustomers(identity, body)
-                return this.response.OKWithEmptyData("Success", res)
+                return this.response.OKWithEmptyData(res, "Success")
             } catch (error) {
                 next(error)
             }

@@ -1,8 +1,7 @@
 import express from "express"
 import BaseController from "../.BaseController"
 import ProductsHandler from "./Handler"
-import { CreateAttributeBody, UpdateAttributeValidation, createAttributesValidation, deleteValidation, updateAttributeValidation } from "./Request"
-import { paginationValidation, paginationType } from "../.BaseRequest"
+import { CreateAttributeBody, UpdateAttributeValidation, createAttributesValidation, deleteValidation, paginationType, paginationValidation, updateAttributeValidation } from "./Request"
 import { TokenPayload } from "../../middleware/Authentication"
 import ProductsResponse from "./Response"
 
@@ -20,7 +19,7 @@ class ProductsController extends BaseController {
                 const identity: TokenPayload = req.user
 
                 await this.handler.handleCreateProducts(identity, body)
-                return this.response.CreatedNewData("Success", res)
+                return this.response.CreatedNewData(res, "Success")
             } catch (error) {
                 next(error)
             }
@@ -36,14 +35,11 @@ class ProductsController extends BaseController {
 
                 const result = await this.handler.handleGetAllProducts(identity, pagination)
                 return this.response.OKWithDataPagination(
+                    res,
                     "Success",
                     result.rows,
-                    {
-                        currentPage: pagination.page,
-                        pageSize: pagination.pageSize
-                    },
-                    result.count,
-                    res
+                    pagination,
+                    result.count
                 )
             } catch (error) {
                 next(error)
@@ -58,7 +54,7 @@ class ProductsController extends BaseController {
                 const identity: TokenPayload = req.user
 
                 await this.handler.handleUpdateProducts(identity, body, id)
-                return this.response.OKWithEmptyData("Success", res)
+                return this.response.OKWithEmptyData(res, "Success")
             } catch (error) {
                 next(error)
             }
@@ -71,7 +67,7 @@ class ProductsController extends BaseController {
                 const identity: TokenPayload = req.user
 
                 await this.handler.handleDeleteProducts(identity, id)
-                return this.response.OKWithEmptyData("Success", res)
+                return this.response.OKWithEmptyData(res, "Success")
             } catch (error) {
                 next(error)
             }

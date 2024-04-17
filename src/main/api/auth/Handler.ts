@@ -4,7 +4,8 @@ import jwt from "jsonwebtoken"
 import { LoginAttributeBody } from "./Request"
 import ErrorHandler from "../../middleware/ErrorHandler"
 import configData from "../../config/GeneralConfig"
-import { TokenPayload, insertBlockedToken } from "../../middleware/Authentication"
+import { TokenPayload } from "../../middleware/Authentication"
+import SessionUtility from "../../utility/SessionUtiliity"
 
 class AuthHandler {
     private userRepo = UsersRepo
@@ -25,11 +26,18 @@ class AuthHandler {
         const checkPassword = bcrypt.compareSync(body.password, result.Password)
         if (!checkPassword) throw new ErrorHandler(400, "Wrong password")
 
-        return jwt.sign({ id: result.Id, username: result.Username }, configData.JWT_SECRET, { expiresIn: "30m" })
+        const tokenObject = {
+            id: result.Id,
+            username: result.Username
+        }
+        const token = jwt.sign(tokenObject, configData.JWT_SECRET, { expiresIn: configData.JWT_EXPIRATION })
+        SessionUtility.insertLoginToken(token)
+
+        return token
     }
 
     async handleLogout(identity: TokenPayload) {
-        await insertBlockedToken(identity)
+        await SessionUtility.insertBlockedToken(identity)
 
         return true
     }

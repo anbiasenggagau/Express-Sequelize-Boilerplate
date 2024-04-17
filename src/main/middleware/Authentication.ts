@@ -1,7 +1,7 @@
 import express from "express"
 import jwt from "jsonwebtoken"
 import configData from "../config/GeneralConfig"
-import MemCacheUtility from "../utility/MemCacheUtility"
+import SessionUtility from "../utility/SessionUtiliity"
 
 export interface TokenPayload {
     id: string
@@ -20,28 +20,10 @@ export function authenticate(req: express.Request, res: express.Response, next: 
         if (err) return res.status(403).json({ message: err.message })
         req.user = user
 
-        const blocked = await getBlockedToken(req.user)
+        const blocked = await SessionUtility.getBlockedToken(req.user)
         if (blocked != null)
             return res.status(403).json({ message: "jwt expired" })
 
         next()
     })
-}
-
-export async function insertBlockedToken(identity: TokenPayload) {
-    MemCacheUtility.SetExpiredAt(
-        {
-            key: identity.id + identity.iat.toString(),
-            value: identity.iat.toString(),
-            expiredAt: identity.exp
-        }
-    )
-}
-
-export async function removeBlockedToken(identity: TokenPayload) {
-    MemCacheUtility.Delete(identity.id + identity.iat.toString())
-}
-
-export async function getBlockedToken(identity: TokenPayload) {
-    return await MemCacheUtility.Get(identity.id + identity.iat.toString())
 }

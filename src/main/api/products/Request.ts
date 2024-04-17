@@ -23,10 +23,24 @@ export const updateAttributeValidation = [
         .exists()
 ]
 
+export const paginationValidation = [
+    query("page")
+        .optional()
+        .isNumeric(),
+    query("page_size")
+        .optional()
+        .isNumeric()
+]
+
 export const deleteValidation = [
     query("id")
         .exists()
 ]
+
+export type paginationType = {
+    page: number
+    pageSize: number
+}
 
 export type CreateAttributeBody = {
     name: string

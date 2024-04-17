@@ -2,8 +2,7 @@ import { TokenPayload } from "../../middleware/Authentication"
 import ErrorHandler from "../../middleware/ErrorHandler"
 import ProductsRepo from "../../model/repository/MainRepository/ProductsRepo"
 import StoresRepo from "../../model/repository/MainRepository/StoresRepo"
-import { paginationType } from "../.BaseRequest"
-import { CreateAttributeBody, UpdateAttributeValidation } from "./Request"
+import { CreateAttributeBody, UpdateAttributeValidation, paginationType } from "./Request"
 
 class ProductsHandler {
     private Repository = ProductsRepo

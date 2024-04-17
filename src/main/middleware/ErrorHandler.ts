@@ -9,13 +9,16 @@ const response = new BaseResponse()
 export function handleError(error: unknown, req: expres.Request, res: expres.Response, next: expres.NextFunction) {
     console.log(error)
     if (error instanceof ErrorHandler)  // Handle error from manually thrown error
-        return response.handleErrorStatusCode(error.statusCode, error.message, res, error.errorValidationList)
+        return response.handleErrorStatusCode(res, error.statusCode, error.message, error.errorValidationList)
     else if (error instanceof ValidationErrorSequelize)   // Handle error from sequelize validation
-        return response.BadRequest(error.errors[0].message, res)
+        return response.BadRequest(res, error.errors[0].message)
     else if (error instanceof ForeignKeyConstraintError)     // Handle error from sequelize foreign key
-        return response.BadRequest((error as any).parent.detail, res)
+        return response.BadRequest(res, (error as any).parent.detail)
     else if (error instanceof SyntaxError && error.hasOwnProperty("statusCode")) {
-        return response.SendCustomResponse((error as any)["statusCode"], error.message, res)
+        return response.SendCustomResponse(res, (error as any)["statusCode"], error.message)
+    }
+    else if (error instanceof TransactionErrorHandler) {
+        handleError(error.errorInstancece, req, res, next)
     }
     else
         return response.InternalServerError(res)
@@ -32,6 +35,15 @@ class ErrorHandler extends Error {
         this.message = message ?? ""
         this.statusCode = statusCode
         this.errorValidationList = errorValidationList
+    }
+}
+
+export class TransactionErrorHandler extends Error {
+    errorInstancece: unknown
+
+    constructor(errorInstance: unknown) {
+        super()
+        this.errorInstancece = errorInstance
     }
 }
 

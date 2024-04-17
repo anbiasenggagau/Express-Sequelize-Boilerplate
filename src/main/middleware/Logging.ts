@@ -4,9 +4,11 @@ import LoggingRepo from "../model/repository/ExtensionRepository/LoggingRepo"
 
 export function handleLogging(req: expres.Request, res: expres.Response, next: expres.NextFunction) {
     const start = performance.now()
-    res.on("finish", () => {
-        const loggingRepo = LoggingRepo
 
+    // Asynchronous Logging
+    res.on("finish", () => {
+        // Consider to deactivate logging to database if not implemented
+        const loggingRepo = LoggingRepo
         if (req.user) loggingRepo.insertNewData({
             UserId: req.user.id,
             Username: req.user.username,
@@ -14,20 +16,24 @@ export function handleLogging(req: expres.Request, res: expres.Response, next: e
             StatusCode: res.statusCode
         })
 
-        console.log("======================================================")
-        console.log(
-            {
-                time: new Date().toString(),
-                method: req.method,
-                hostname: req.hostname,
-                originalUrl: req.originalUrl,
-                user: req.user,
-                responseTime: performance.now() - start,
-                statusCode: res.statusCode,
-            }
-        )
-        console.log("======================================================")
+        return logging(req, res, start)
     })
 
     next()
+}
+
+async function logging(req: expres.Request, res: expres.Response, start: number) {
+    console.log("======================================================")
+    console.log(
+        {
+            time: new Date().toString(),
+            method: req.method,
+            ipClient: req.ip,
+            originalUrl: req.originalUrl,
+            user: req.user,
+            responseTime: performance.now() - start,
+            statusCode: res.statusCode,
+        }
+    )
+    console.log("======================================================")
 }

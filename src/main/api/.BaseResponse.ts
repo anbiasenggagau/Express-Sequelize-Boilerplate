@@ -3,26 +3,26 @@ import { ValidationError } from "express-validator"
 import { StatusCode } from "../const"
 
 class BaseResponse {
-    OKWithEmptyData(message: string, response: express.Response) {
+    OKWithEmptyData(response: express.Response, message: string) {
         const finalResponse = {
             message,
             statusCode: 200
         }
 
-        response.status(200).json(finalResponse)
+        return response.status(200).json(finalResponse)
     }
 
-    OKWithData<T>(message: string, data: T, response: express.Response) {
+    OKWithData<T>(response: express.Response, message: string, data: T) {
         const finalResponse = {
             message,
             statusCode: 200,
             data
         }
 
-        response.status(200).json(finalResponse)
+        return response.status(200).json(finalResponse)
     }
 
-    OKWithDataPagination<T>(message: string, data: T[], pagination: { currentPage: number, pageSize: number }, dataTotal: number, response: express.Response) {
+    OKWithDataPagination<T>(response: express.Response, message: string, data: T[], pagination: { page: number, pageSize: number }, dataTotal: number) {
         const paginationResult = this.constructPagination(pagination, dataTotal)
 
         const finalResponse = {
@@ -32,81 +32,87 @@ class BaseResponse {
             data
         }
 
-        response.status(200).json(finalResponse)
+        return response.status(200).json(finalResponse)
     }
 
-    CreatedNewData(message: string, response: express.Response) {
+    CreatedNewData<T>(response: express.Response, message: string, data?: T) {
         const finalResponse = {
             message,
-            statusCode: 201
+            statusCode: 201,
+            data
         }
 
-        response.status(201).json(finalResponse)
+        return response.status(201).json(finalResponse)
     }
 
-
-    NotFound(message: string, response: express.Response) {
+    NotFound(response: express.Response, message: string) {
         const finalResponse = {
             message,
             statusCode: 404,
         }
 
-        response.status(404).json(finalResponse)
+        return response.status(404).json(finalResponse)
     }
 
-    BadRequest(message: string, response: express.Response) {
+    BadRequest(response: express.Response, message: string) {
         const finalResponse = {
             message,
             statusCode: 400,
         }
 
-        response.status(400).json(finalResponse)
+        return response.status(400).json(finalResponse)
     }
 
-    ErrorValidation(data: ValidationError[], response: express.Response) {
+    ErrorValidation(response: express.Response, data: ValidationError[]) {
         const finalResponse = {
             message: "Error Validation",
             statusCode: 400,
             data
         }
 
-        response.status(400).json(finalResponse)
+        return response.status(400).json(finalResponse)
     }
 
     Unauthorized(response: express.Response) {
-        response.sendStatus(401)
+        return response.sendStatus(401)
     }
 
-    Forbidden(response: express.Response) {
-        response.sendStatus(403)
+    Forbidden(response: express.Response, message?: string) {
+        if (message)
+            return response.status(403).json({
+                message,
+                statusCode: 403
+            })
+
+        return response.sendStatus(403)
     }
 
     InternalServerError(response: express.Response) {
-        response.status(500).json({
+        return response.status(500).json({
             message: "Internal error occured, please contact administrator",
             statusCode: 500
         })
     }
 
-    SendOnlyStatusCode(statusCode: StatusCode, response: express.Response) {
-        response.sendStatus(statusCode)
+    SendOnlyStatusCode(response: express.Response, statusCode: StatusCode) {
+        return response.sendStatus(statusCode)
     }
 
-    SendCustomResponse(statusCode: StatusCode, message: string, response: express.Response, data?: any) {
-        response.status(statusCode).json({
+    SendCustomResponse(response: express.Response, statusCode: StatusCode, message: string, data?: any) {
+        return response.status(statusCode).json({
             message,
             statusCode,
             data
         })
     }
 
-    handleErrorStatusCode(statusCode: StatusCode, message: string, response: express.Response, errorValidationList?: ValidationError[]) {
-        if (statusCode == 400 && errorValidationList) this.ErrorValidation(errorValidationList, response)
-        else if (statusCode == 400 && !errorValidationList) this.BadRequest(message, response)
-        else if (statusCode == 404) this.NotFound(message, response)
+    handleErrorStatusCode(response: express.Response, statusCode: StatusCode, message: string, errorValidationList?: ValidationError[]) {
+        if (statusCode == 400 && errorValidationList) this.ErrorValidation(response, errorValidationList)
+        else if (statusCode == 400 && !errorValidationList) this.BadRequest(response, message)
+        else if (statusCode == 404) this.NotFound(response, message)
         else if (statusCode == 401) this.Unauthorized(response)
-        else if (statusCode == 403) this.Forbidden(response)
-        else this.SendOnlyStatusCode(statusCode, response)
+        else if (statusCode == 403) this.Forbidden(response, message)
+        else this.SendOnlyStatusCode(response, statusCode)
     }
 
     protected getLastPage(dataTotal: number, pageSize: number): number {
@@ -115,15 +121,15 @@ class BaseResponse {
         else return parseInt(result.toString()) + 1
     }
 
-    protected constructPagination(pagination: { currentPage: number, pageSize: number }, dataTotal: number) {
-        let from = 1
-        let to = (pagination.currentPage * pagination.pageSize)
+    protected constructPagination(pagination: { page: number, pageSize: number }, dataTotal: number) {
+        let from = dataTotal == 0 ? 0 : 1
+        let to = dataTotal == 0 ? 0 : (pagination.page * pagination.pageSize)
 
-        if (pagination.currentPage != 1) from = (pagination.currentPage - 1 * pagination.pageSize) + 1
+        if (pagination.page != 1 && dataTotal > 0) from = ((pagination.page - 1) * pagination.pageSize) + 1
         if (to > dataTotal) to = to - pagination.pageSize + (dataTotal - (to - pagination.pageSize))
 
         return {
-            pageNumber: pagination.currentPage,
+            pageNumber: pagination.page,
             pageSize: pagination.pageSize,
             totalPages: this.getLastPage(dataTotal, pagination.pageSize),
             fromItem: from,

@@ -2,8 +2,9 @@ import UsersRepo from "../../model/repository/MainRepository/UsersRepo";
 import { CreateAttributesBody, UpdateAttributesBody } from "./Request";
 import configData from "../../config/GeneralConfig"
 import bcrypt from "bcryptjs"
-import { TokenPayload, insertBlockedToken } from "../../middleware/Authentication";
+import { TokenPayload } from "../../middleware/Authentication";
 import ErrorHandler from "../../middleware/ErrorHandler";
+import SessionUtility from "../../utility/SessionUtiliity";
 
 class UsersHandler {
     private Repository = UsersRepo
@@ -47,7 +48,7 @@ class UsersHandler {
         })
 
         if (result == 0) throw new ErrorHandler(404, "User not found or already deleted")
-        await insertBlockedToken(identity)
+        await SessionUtility.insertBlockedToken(identity)
 
         return true
     }

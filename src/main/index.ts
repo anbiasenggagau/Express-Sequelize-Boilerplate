@@ -11,7 +11,8 @@ DB.forEach((value) => {
     value.authenticate()
 
     // Only implement on development environment
-    // value.sync({ alter: true })
+    if (config.NODE_ENV == "development")
+        value.sync({ alter: true })
 })
 
 const app = express()
