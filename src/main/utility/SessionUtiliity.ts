@@ -16,19 +16,19 @@ class SessionUtility {
 
                 if (keys.length >= configData.NUMBER_OF_ALLOWED_SESSIONS) {
                     const min = Math.min(...tokenNumber)
-                    const loginToken = await MemCacheUtility.Get("login" + identity.id + "=>" + min)
+                    const key = keys.find(value => value.includes("login" + identity.id + "=>" + min))!
+                    const loginToken = await MemCacheUtility.Get(key)
 
                     if (!loginToken) return null
                     const loginTokenObject = JSON.parse(loginToken) as TokenPayload
                     this.insertBlockedToken(loginTokenObject)
-                    MemCacheUtility.Delete("login" + identity.id + "=>" + min)
                 }
 
                 let max = 0
-                if (tokenNumber.length > 0) max = tokenNumber[tokenNumber.length - 1]
+                if (tokenNumber.length > 0) max = Math.max(...tokenNumber)
 
                 MemCacheUtility.SetExpiredAt({
-                    key: "login" + identity.id + "=>" + (max + 1),
+                    key: "login" + identity.id + "=>" + (max + 1) + "=>" + identity.iat,
                     value: JSON.stringify(identity),
                     expiredAt: identity.exp
                 })
@@ -37,6 +37,9 @@ class SessionUtility {
     }
 
     static async insertBlockedToken(identity: TokenPayload) {
+        const keys = await MemCacheUtility.GetKeysFromPattern("login" + identity.id + "=>*=>" + identity.iat)
+        if (keys) MemCacheUtility.Delete(keys[0])
+
         MemCacheUtility.SetExpiredAt(
             {
                 key: identity.id + identity.iat.toString(),
