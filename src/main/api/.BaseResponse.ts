@@ -25,6 +25,11 @@ class BaseResponse {
     OKWithDataPagination<T>(response: express.Response, message: string, data: T[], pagination: { page: number, pageSize: number }, dataTotal: number) {
         const paginationResult = this.constructPagination(pagination, dataTotal)
 
+        if (pagination.page > paginationResult.totalPages) return response.status(404).json({
+            message: "Not Data Found",
+            statusCode: 404
+        })
+
         const finalResponse = {
             message,
             statusCode: 200,
@@ -126,7 +131,7 @@ class BaseResponse {
         let to = dataTotal == 0 ? 0 : (pagination.page * pagination.pageSize)
 
         if (pagination.page != 1 && dataTotal > 0) from = ((pagination.page - 1) * pagination.pageSize) + 1
-        if (to > dataTotal) to = to - pagination.pageSize + (dataTotal - (to - pagination.pageSize))
+        if (to > dataTotal) to = dataTotal
 
         return {
             pageNumber: pagination.page,
