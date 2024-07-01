@@ -10,6 +10,15 @@ export interface TokenPayload {
     iat: number
 }
 
+export interface RefreshToken {
+    id: string
+    username: string
+    refresh: boolean
+    refreshId: string
+    exp: number
+    iat: number
+}
+
 export function authenticate(req: express.Request, res: express.Response, next: express.NextFunction) {
     const authHeader = req.headers["authorization"]
     const token = authHeader?.split(" ")[1]
@@ -24,6 +33,21 @@ export function authenticate(req: express.Request, res: express.Response, next: 
         if (blocked != null)
             return res.status(403).json({ message: "jwt expired" })
 
+        next()
+    })
+}
+
+export function refresh(req: express.Request, res: express.Response, next: express.NextFunction) {
+    const authHeader = req.headers["authorization"]
+    const token = authHeader?.split(" ")[1]
+
+    if (token == null) return res.sendStatus(401)
+
+    jwt.verify(token, configData.JWT_SECRET, async (err, user) => {
+        if (err) return res.status(403).json({ message: err.message })
+        if (!(user as RefreshToken).refresh) return res.sendStatus(501)
+
+        req.user = user
         next()
     })
 }

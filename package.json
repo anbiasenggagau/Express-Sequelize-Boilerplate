@@ -13,6 +13,7 @@
   "license": "ISC",
   "dependencies": {
     "@sequelize/core": "^7.0.0-alpha.36",
+    "@types/uuid": "^10.0.0",
     "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
     "dotenv": "^16.4.2",
@@ -22,7 +23,8 @@
     "pg": "^8.11.3",
     "redis": "^4.6.13",
     "sequelize": "^6.36.0",
-    "sequelize-typescript": "^2.1.6"
+    "sequelize-typescript": "^2.1.6",
+    "uuid": "^10.0.0"
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",

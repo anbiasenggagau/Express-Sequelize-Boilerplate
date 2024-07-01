@@ -1,4 +1,4 @@
-import { BelongsTo, Column, DataType, HasOne, Model, Table } from "sequelize-typescript"
+import { BelongsTo, Column, DataType, HasMany, Model, Table } from "sequelize-typescript"
 import Products from "./Products"
 import Users from "./Users"
 
@@ -59,8 +59,8 @@ class Stores extends Model<StoresAttributes | StoresCreationAttributes> implemen
     @BelongsTo(() => Users, { foreignKey: "UserId", targetKey: "Id", onDelete: "CASCADE" })
     User!: Users
 
-    @HasOne(() => Products, { foreignKey: "StoreId", sourceKey: "Id", onDelete: "CASCADE" })
-    Product!: Products
+    @HasMany(() => Products, { foreignKey: "StoreId", sourceKey: "Id", onDelete: "CASCADE" })
+    Product!: Products[]
 }
 
 export default Stores
