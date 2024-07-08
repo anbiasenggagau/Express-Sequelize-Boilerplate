@@ -122,8 +122,8 @@ class BaseResponse {
 
     protected getLastPage(dataTotal: number, pageSize: number): number {
         let result = dataTotal / pageSize
-        if (result % pageSize == 0 && result != 0) return result
-        else return parseInt(result.toString()) + 1
+        if (result % pageSize != 0) return parseInt(result.toString()) + 1
+        else return result
     }
 
     protected constructPagination(pagination: { page: number, pageSize: number }, dataTotal: number) {

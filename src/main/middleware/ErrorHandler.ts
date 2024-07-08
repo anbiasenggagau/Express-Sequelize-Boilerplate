@@ -11,7 +11,15 @@ export function handleError(error: unknown, req: expres.Request, res: expres.Res
     if (error instanceof ErrorHandler)  // Handle error from manually thrown error
         return response.handleErrorStatusCode(res, error.statusCode, error.message, error.errorValidationList)
     else if (error instanceof ValidationErrorSequelize)   // Handle error from sequelize validation
+    {
+        if (error.errors.some(value => (value.type) as any == "notNull Violation"))
+            return response.InternalServerError(res)
+        else if (error.errors.some(value => (value.type) == "unique violation")) {
+            const message = error.errors[0].message.replaceAll(" must be unique", ": same value is already exists")
+            return response.BadRequest(res, message)
+        }
         return response.BadRequest(res, error.errors[0].message)
+    }
     else if (error instanceof ForeignKeyConstraintError)     // Handle error from sequelize foreign key
         return response.BadRequest(res, (error as any).parent.detail)
     else if (error instanceof SyntaxError && error.hasOwnProperty("statusCode")) {
