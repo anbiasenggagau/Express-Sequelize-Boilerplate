@@ -12,22 +12,13 @@ class AuthHandler {
     private userRepo = UsersRepo
 
     async handleRefreshToken(identity: RefreshToken) {
-        const tokenObject = {
-            id: identity.id,
-            username: identity.username
-        }
+        const check = await SessionUtility.checkBeforeRenewAccessToken(identity)
+        if (!check.valid) throw new ErrorHandler(401, check.message)
 
-        const refreshTokenObject = {
-            id: identity.id,
-            username: identity.username,
-            refresh: true
-        }
-
-        const token = jwt.sign(tokenObject, configData.JWT_SECRET, { expiresIn: configData.JWT_EXPIRATION })
-        const refreshToken = jwt.sign(refreshTokenObject, configData.JWT_SECRET, { expiresIn: configData.JWT_REFRESH_EXPIRATION })
+        return await SessionUtility.renewAccessToken(identity)
     }
 
-    async handleLogin(body: LoginAttributeBody) {
+    async handleLogin(body: LoginAttributeBody): Promise<{ token: string } | { accessToken: string, refreshToken: string }> {
         let whereQuery: any = {}
         if (body.email) whereQuery.Email = body.email
         else whereQuery.Username = body.username
@@ -41,26 +32,32 @@ class AuthHandler {
         const checkPassword = bcrypt.compareSync(body.password, result.Password)
         if (!checkPassword) throw new ErrorHandler(400, "Wrong password")
 
-        const tokenObject = {
+        const accessTokenObject = {
             id: result.Id,
             username: result.Username
         }
-        const token = jwt.sign(tokenObject, configData.JWT_SECRET, { expiresIn: configData.JWT_EXPIRATION })
+        const accessToken = jwt.sign(accessTokenObject, configData.JWT_SECRET, { expiresIn: configData.JWT_EXPIRATION })
 
-        const refreshTokenObject = {
-            id: result.id,
-            username: result.Username,
-            refreshId: uuid.v7()
+        if (configData.REFRESH_TOKEN) {
+            const refreshTokenObject = {
+                id: result.id,
+                username: result.Username,
+                refreshId: uuid.v7()
+            }
+            const refreshToken = jwt.sign(refreshTokenObject, configData.JWT_SECRET, { expiresIn: configData.JWT_REFRESH_EXPIRATION })
+
+            SessionUtility.insertRefreshLoginToken(refreshToken, accessToken)
+
+            return { accessToken, refreshToken }
         }
-        const refreshToken = jwt.sign(refreshTokenObject, configData.JWT_SECRET, { expiresIn: configData.JWT_REFRESH_EXPIRATION })
+        else SessionUtility.insertLoginToken(accessToken)
 
-        SessionUtility.insertLoginToken(token, refreshToken)
-
-        return token
+        return { token: accessToken }
     }
 
-    async handleLogout(identity: TokenPayload) {
-        await SessionUtility.insertBlockedToken(identity)
+    async handleLogout(identity: TokenPayload | RefreshToken) {
+        if (configData.REFRESH_TOKEN) await SessionUtility.revokeSession(identity as RefreshToken)
+        else await SessionUtility.insertBlockedToken(identity)
 
         return true
     }

@@ -26,7 +26,7 @@ class CustomersController extends BaseController {
 
         app.post("/auth/logout", authenticate, async (req: express.Request, res: express.Response, next: express.NextFunction) => {
             try {
-                const identity: TokenPayload = req.user
+                const identity: TokenPayload | RefreshToken = req.user
 
                 await this.handler.handleLogout(identity)
                 return this.response.OKWithEmptyData(res, "Success")
@@ -39,8 +39,8 @@ class CustomersController extends BaseController {
             try {
                 const identity: RefreshToken = req.user
 
-                await this.handler.handleRefreshToken(identity)
-                return this.response.OKWithEmptyData(res, "Success")
+                const data = await this.handler.handleRefreshToken(identity)
+                return this.response.OKWithData(res, "Success", data)
             } catch (error) {
                 next(error)
             }

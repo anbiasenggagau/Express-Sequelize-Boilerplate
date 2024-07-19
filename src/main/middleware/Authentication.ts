@@ -26,12 +26,14 @@ export function authenticate(req: express.Request, res: express.Response, next: 
     if (token == null) return res.sendStatus(401)
 
     jwt.verify(token, configData.JWT_SECRET, async (err, user) => {
-        if (err) return res.status(403).json({ message: err.message })
+        if (err) return res.status(401).json({ message: err.message })
         req.user = user
 
-        const blocked = await SessionUtility.getBlockedToken(req.user)
-        if (blocked != null)
-            return res.status(403).json({ message: "jwt expired" })
+        if (!configData.REFRESH_TOKEN) {
+            const blocked = await SessionUtility.getBlockedToken(req.user)
+            if (blocked != null)
+                return res.status(401).json({ message: "jwt expired" })
+        }
 
         next()
     })
@@ -44,8 +46,8 @@ export function refresh(req: express.Request, res: express.Response, next: expre
     if (token == null) return res.sendStatus(401)
 
     jwt.verify(token, configData.JWT_SECRET, async (err, user) => {
-        if (err) return res.status(403).json({ message: err.message })
-        if (!(user as RefreshToken).refresh) return res.sendStatus(501)
+        if (err) return res.status(401).json({ message: err.message })
+        if (!configData.REFRESH_TOKEN) return res.sendStatus(501)
 
         req.user = user
         next()
