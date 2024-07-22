@@ -135,7 +135,7 @@ abstract class BaseRepository<TModelInstance, TModelAttributes, TCreationAttribu
     }
 
     async updateData(CreationAttributes: Partial<TCreationAttributes>, UpdateOption: UpdateOption<TModelAttributes>): Promise<[affectedCount: number, affectedRows: TModelInstance[]]> {
-        return await this.model.update({ ...CreationAttributes }, { ...UpdateOption })
+        return await this.model.update({ ...CreationAttributes }, { ...UpdateOption, returning: true })
     }
 
     async deleteData(DeleteOption: DeleteOption<TModelAttributes>): Promise<number> {

@@ -1,9 +1,9 @@
 import { WhereOptions } from "sequelize";
-import Stores, { StoresAttributes, StoresCreationAttributes } from "../../entity/MainDatabase/Stores";
-import BaseRepository from "../.BaseRepository";
-import Products from "../../entity/MainDatabase/Products";
+import Stores, { StoresAttributes, StoresCreationAttributes } from "../entity/Stores";
+import BaseRepository from "./.BaseRepository";
+import Products from "../entity/Products";
 
-class StoresRepo extends BaseRepository<Stores, StoresAttributes, StoresCreationAttributes>{
+class StoresRepo extends BaseRepository<Stores, StoresAttributes, StoresCreationAttributes> {
     async findOrCreate(whereQuery: WhereOptions<StoresAttributes>, valueCreation: StoresCreationAttributes) {
         return await Stores.findOrCreate({
             where: { ...whereQuery },

@@ -17,8 +17,8 @@ class CustomersController extends BaseController {
                 super.validateRequest(req)
                 const body: CreateAttributesBody = { ...req.body }
 
-                await this.handler.handleCreateNewUser(body)
-                return this.response.CreatedNewData(res, "Success")
+                const data = await this.handler.handleCreateNewUser(body)
+                return this.response.CreatedNewData(res, "Success", data.Id)
             } catch (error) {
                 next(error)
             }

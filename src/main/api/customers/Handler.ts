@@ -1,6 +1,6 @@
 import { TokenPayload } from "../../middleware/Authentication";
 import ErrorHandler from "../../middleware/ErrorHandler";
-import CustomersRepo from "../../model/repository/MainRepository/CustomersRepo";
+import CustomersRepo from "../../model/repository/CustomersRepo";
 import { CreateAttributesBody, UpdateAttributesBody } from "./Request";
 
 class CustomersHandler {
@@ -21,7 +21,7 @@ class CustomersHandler {
 
         if (!result[1]) throw new ErrorHandler(400, "Already initialized your own")
 
-        return true
+        return result[0]
     }
 
     async handleGetAllCustomers(identity: TokenPayload) {

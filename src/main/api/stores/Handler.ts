@@ -1,6 +1,6 @@
 import { TokenPayload } from "../../middleware/Authentication"
 import ErrorHandler from "../../middleware/ErrorHandler"
-import StoresRepo from "../../model/repository/MainRepository/StoresRepo"
+import StoresRepo from "../../model/repository/StoresRepo"
 import { CreateAttributeBody, UpdateAttributeValidation } from "./Request"
 
 class StoresHandler {
@@ -19,7 +19,7 @@ class StoresHandler {
 
         if (!result[1]) throw new ErrorHandler(400, "You already create your own store")
 
-        return true
+        return result[0]
     }
 
     async handleUpdateStores(identity: TokenPayload, body: UpdateAttributeValidation) {

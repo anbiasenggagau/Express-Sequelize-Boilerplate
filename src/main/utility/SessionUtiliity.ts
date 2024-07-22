@@ -2,7 +2,8 @@ import jwt from "jsonwebtoken"
 import configData from "../config/GeneralConfig"
 import { RefreshToken, TokenPayload } from "../middleware/Authentication"
 import MemCacheUtility from "./MemCacheUtility"
-import uuid from "uuid"
+import { v7 } from "uuid"
+import ErrorHandler from "../middleware/ErrorHandler"
 
 type RefreshTokenSession = {
     refreshId: string
@@ -29,14 +30,14 @@ class SessionUtility {
                 const lastTokenSessionObject = JSON.parse(lastTokenSession) as RefreshTokenSession
 
                 MemCacheUtility.Delete(key)
-                MemCacheUtility.Delete(lastTokenSessionObject.refreshId)
+                MemCacheUtility.Delete("valid" + lastTokenSessionObject.refreshId)
             }
 
             let max = 0
             if (tokenNumber.length > 0) max = Math.max(...tokenNumber)
 
             MemCacheUtility.SetExpiredAt({
-                key: "login" + identity.id + "=>" + (max + 1),
+                key: "login" + identity.id + "=>" + (max + 1) + "=>" + (identity.refreshId),
                 value: JSON.stringify(
                     {
                         refreshId: identity.refreshId,
@@ -59,7 +60,7 @@ class SessionUtility {
             id: refreshTokenObject.id,
             username: refreshTokenObject.username,
             refresh: refreshTokenObject.refresh,
-            refreshId: uuid.v7(),
+            refreshId: v7(),
         }
 
         const newAccessTokenObject = {
@@ -102,31 +103,39 @@ class SessionUtility {
     }
 
     static async checkBeforeRenewAccessToken(refreshTokenObject: RefreshToken): Promise<{ valid: boolean, message: string }> {
-        let check = await MemCacheUtility.Get("valid" + refreshTokenObject.refreshId)
-        if (!check) {
-            check = await MemCacheUtility.Get("blocked" + refreshTokenObject.refreshId)
-            if (!check) return { valid: false, message: "jwt expired" }
+        try {
+            let check = await MemCacheUtility.Get("valid" + refreshTokenObject.refreshId)
+            if (!check) {
+                check = await MemCacheUtility.Get("blocked" + refreshTokenObject.refreshId)
+                if (!check) return { valid: false, message: "jwt expired" }
 
-            this.revokeAllSession(refreshTokenObject)
-            return { valid: false, message: "Your session token has been hijacked by someone else" }
-        }
+                this.revokeAllSession(refreshTokenObject)
+                return { valid: false, message: "Your session token has been hijacked by someone else" }
+            }
 
-        const sessionObject = JSON.parse(check) as TokenPayload
-        if (sessionObject.exp < (new Date()).getTime()) {
-            this.revokeAllSession(refreshTokenObject)
-            return { valid: false, message: "Your session token has been hijacked by someone else" }
+            const sessionObject = JSON.parse(check) as TokenPayload
+            if (sessionObject.exp > (new Date()).getTime()) {
+                this.revokeAllSession(refreshTokenObject)
+                return { valid: false, message: "Your session token has been hijacked by someone else" }
+            }
+            return { valid: true, message: "" }
+        } catch (error) {
+            throw new ErrorHandler(500)
         }
-        return { valid: true, message: "" }
     }
 
     private static async revokeAllSession(refreshTokenObject: RefreshToken) {
-        const allSessionKey = await MemCacheUtility.GetKeysFromPattern("login" + refreshTokenObject.id + "*") as string[]
-        for (const sessionKey in allSessionKey) {
-            const session = await MemCacheUtility.Get(sessionKey) as string
-            const sessionObject = JSON.parse(session) as RefreshTokenSession
+        try {
+            const allSessionKey = await MemCacheUtility.GetKeysFromPattern("login" + refreshTokenObject.id + "*") as string[]
+            for (const sessionKey of allSessionKey) {
+                const session = await MemCacheUtility.Get(sessionKey) as string
+                const sessionObject = JSON.parse(session) as RefreshTokenSession
 
-            MemCacheUtility.Delete(sessionKey)
-            MemCacheUtility.Delete("valid" + sessionObject.refreshId)
+                MemCacheUtility.Delete(sessionKey)
+                MemCacheUtility.Delete("valid" + sessionObject.refreshId)
+            }
+        } catch (error) {
+            throw new ErrorHandler(500)
         }
     }
 

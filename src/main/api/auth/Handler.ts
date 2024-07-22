@@ -1,4 +1,4 @@
-import UsersRepo from "../../model/repository/MainRepository/UsersRepo"
+import UsersRepo from "../../model/repository/UsersRepo"
 import bcrypt from "bcryptjs"
 import jwt from "jsonwebtoken"
 import { LoginAttributeBody, } from "./Request"
@@ -6,7 +6,7 @@ import ErrorHandler from "../../middleware/ErrorHandler"
 import configData from "../../config/GeneralConfig"
 import { RefreshToken, TokenPayload } from "../../middleware/Authentication"
 import SessionUtility from "../../utility/SessionUtiliity"
-import uuid from "uuid"
+import { v7 } from "uuid"
 
 class AuthHandler {
     private userRepo = UsersRepo
@@ -40,9 +40,10 @@ class AuthHandler {
 
         if (configData.REFRESH_TOKEN) {
             const refreshTokenObject = {
-                id: result.id,
+                id: result.Id,
                 username: result.Username,
-                refreshId: uuid.v7()
+                refresh: true,
+                refreshId: v7()
             }
             const refreshToken = jwt.sign(refreshTokenObject, configData.JWT_SECRET, { expiresIn: configData.JWT_REFRESH_EXPIRATION })
 

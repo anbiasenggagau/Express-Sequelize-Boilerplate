@@ -40,14 +40,16 @@ class BaseResponse {
         return response.status(200).json(finalResponse)
     }
 
-    CreatedNewData<T>(response: express.Response, message: string, data?: T) {
+    CreatedNewData<T>(response: express.Response, message: string, id: number | string) {
         const finalResponse = {
             message,
             statusCode: 201,
-            data
+            data: {
+                id
+            }
         }
 
-        return response.status(201).json(finalResponse)
+        response.status(201).json(finalResponse)
     }
 
     NotFound(response: express.Response, message: string) {
@@ -78,8 +80,13 @@ class BaseResponse {
         return response.status(400).json(finalResponse)
     }
 
-    Unauthorized(response: express.Response) {
-        return response.sendStatus(401)
+    Unauthorized(response: express.Response, message?: string) {
+        if (!message) return response.sendStatus(401)
+        const finalResponse = {
+            message,
+            statusCode: 401,
+        }
+        return response.status(401).json(finalResponse)
     }
 
     Forbidden(response: express.Response, message?: string) {
@@ -115,7 +122,7 @@ class BaseResponse {
         if (statusCode == 400 && errorValidationList) this.ErrorValidation(response, errorValidationList)
         else if (statusCode == 400 && !errorValidationList) this.BadRequest(response, message)
         else if (statusCode == 404) this.NotFound(response, message)
-        else if (statusCode == 401) this.Unauthorized(response)
+        else if (statusCode == 401) this.Unauthorized(response, message)
         else if (statusCode == 403) this.Forbidden(response, message)
         else this.SendOnlyStatusCode(response, statusCode)
     }

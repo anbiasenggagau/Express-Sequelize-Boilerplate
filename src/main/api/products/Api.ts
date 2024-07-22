@@ -18,8 +18,8 @@ class ProductsController extends BaseController {
                 const body: CreateAttributeBody = { ...req.body }
                 const identity: TokenPayload = req.user
 
-                await this.handler.handleCreateProducts(identity, body)
-                return this.response.CreatedNewData(res, "Success")
+                const data = await this.handler.handleCreateProducts(identity, body)
+                return this.response.CreatedNewData(res, "Success", data.Id)
             } catch (error) {
                 next(error)
             }

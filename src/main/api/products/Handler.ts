@@ -1,7 +1,7 @@
 import { TokenPayload } from "../../middleware/Authentication"
 import ErrorHandler from "../../middleware/ErrorHandler"
-import ProductsRepo from "../../model/repository/MainRepository/ProductsRepo"
-import StoresRepo from "../../model/repository/MainRepository/StoresRepo"
+import ProductsRepo from "../../model/repository/ProductsRepo"
+import StoresRepo from "../../model/repository/StoresRepo"
 import { CreateAttributeBody, UpdateAttributeValidation, paginationType } from "./Request"
 
 class ProductsHandler {
@@ -17,7 +17,7 @@ class ProductsHandler {
 
         if (store == null) throw new ErrorHandler(404, "Store hasn't been created")
 
-        await this.Repository.insertNewData({
+        return await this.Repository.insertNewData({
             Name: body.name,
             Price: body.price,
             Currency: body.currency,
@@ -25,8 +25,6 @@ class ProductsHandler {
             CreatedBy: identity.id,
             UpdatedBy: identity.id
         })
-
-        return true
     }
 
     async handleGetAllProducts(identity: TokenPayload, pagination: paginationType) {

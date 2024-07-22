@@ -1,4 +1,4 @@
-import UsersRepo from "../../model/repository/MainRepository/UsersRepo";
+import UsersRepo from "../../model/repository/UsersRepo";
 import { CreateAttributesBody, UpdateAttributesBody } from "./Request";
 import configData from "../../config/GeneralConfig"
 import bcrypt from "bcryptjs"
@@ -10,13 +10,11 @@ class UsersHandler {
     private Repository = UsersRepo
 
     async handleCreateNewUser(body: CreateAttributesBody) {
-        await this.Repository.insertNewData({
+        return await this.Repository.insertNewData({
             Email: body.email,
             Password: bcrypt.hashSync(body.password, configData.ENCRYPTION_SALT),
             Username: body.username
         })
-
-        return true
     }
 
     async handleUpdateUser(identity: TokenPayload, body: UpdateAttributesBody) {
