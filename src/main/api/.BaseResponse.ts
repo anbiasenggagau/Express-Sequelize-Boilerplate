@@ -129,7 +129,7 @@ class BaseResponse {
 
     protected getLastPage(dataTotal: number, pageSize: number): number {
         let result = dataTotal / pageSize
-        if (result % pageSize != 0) return parseInt(result.toString()) + 1
+        if (dataTotal % pageSize != 0) return parseInt(result.toString()) + 1
         else return result
     }
 
