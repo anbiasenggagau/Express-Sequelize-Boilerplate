@@ -4,14 +4,18 @@
   "description": "",
   "main": "index.ts",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "npm run build && node ./dist/main/index.js",
-    "build": "tsc",
-    "dev": "nodemon -L ./src/main/index.ts"
+    "start": "node ./dist/main/index.js",
+    "start-trace": "node --require ./dist/trace/instrumentation.js ./dist/main/index.js",
+    "build": "rm -rf ./dist && tsc",
+    "dev": "nodemon -L ./src/main/index.ts",
+    "dev-trace": "nodemon -L --require ./src/trace/instrumentation.ts ./src/main/index.ts"
   },
   "author": "anbiasenggagau",
   "license": "ISC",
   "dependencies": {
+    "@opentelemetry/auto-instrumentations-node": "^0.48.0",
+    "@opentelemetry/exporter-trace-otlp-proto": "^0.52.1",
+    "@opentelemetry/sdk-node": "^0.52.1",
     "@sequelize/core": "^7.0.0-alpha.36",
     "@types/uuid": "^10.0.0",
     "bcryptjs": "^2.4.3",
