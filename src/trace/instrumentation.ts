@@ -1,9 +1,11 @@
 import { NodeSDK } from "@opentelemetry/sdk-node"
 import { getNodeAutoInstrumentations } from "@opentelemetry/auto-instrumentations-node"
 import { OTLPTraceExporter } from "@opentelemetry/exporter-trace-otlp-proto"
+import dotenv from "dotenv"
+dotenv.config()
 
 const otlpExporter = new OTLPTraceExporter({
-    url: "http://localhost:4318/v1/traces"
+    url: process.env.TRACING_URI
 })
 
 console.log(otlpExporter)
