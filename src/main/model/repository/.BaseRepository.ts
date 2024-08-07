@@ -75,7 +75,6 @@ abstract class BaseRepository<TModelInstance, TModelAttributes, TCreationAttribu
             ) whereQuery[key] = { [Op.like]: `%${search}%` }
 
             else if (value.type instanceof DATE && !isNaN(Date.parse(search))) {
-                console.log("Date", key)
                 const date1 = new Date(search)
                 const date2 = new Date(search)
                 date1.setHours(0, 0, 0, 0)

@@ -1,8 +1,7 @@
 import { RedisClientType, createClient } from "redis"
-import dotenv from "dotenv"
-dotenv.config()
+import Logging from "./LoggingConfig"
 
-class MemCache {
+class Redis {
     private client: RedisClientType<any, any, any> | null = null
 
     async authenticate() {
@@ -16,12 +15,12 @@ class MemCache {
 
             })
                 .on('error', err => {
-                    console.log('Redis Client Error', err)
+                    Logging.warn('Redis Client Error', err)
                     throw new Error(err)
                 })
                 .connect()
 
-            console.log("Redis Client Connected")
+            Logging.info("Redis Client Connected")
             this.client = data
             return data
         } catch (error) {
@@ -35,4 +34,4 @@ class MemCache {
     }
 }
 
-export default MemCache
+export default Redis

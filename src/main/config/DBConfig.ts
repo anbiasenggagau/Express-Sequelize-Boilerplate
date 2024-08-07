@@ -1,5 +1,6 @@
 import { Dialect } from "sequelize";
 import { Sequelize } from "sequelize-typescript";
+import Logging from "./LoggingConfig";
 import path from 'path'
 
 const DB: Sequelize[] = []
@@ -20,7 +21,9 @@ export const mainDb = new Sequelize({
     models: [
         path.join(__dirname, "../model/entity")
     ],
-    logging: console.log
+    logging: (message) => {
+        Logging.info(message)
+    }
 })
 
 

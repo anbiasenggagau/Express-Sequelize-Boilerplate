@@ -1,15 +1,15 @@
 import { RedisClientType } from "redis";
-import MemCache from "../config/MemCacheConfig";
+import Redis from "../config/RedisConfig";
 
-class MemCacheUtility {
+class RedisUtility {
     public client: RedisClientType<any, any, any> | null = null
 
-    constructor(MemCacheInstance: MemCache) {
-        this.init(MemCacheInstance)
+    constructor(RedisInstance: Redis) {
+        this.init(RedisInstance)
     }
 
-    async init(MemCacheInstance: MemCache) {
-        this.client = await MemCacheInstance.authenticate()
+    async init(RedisInstance: Redis) {
+        this.client = await RedisInstance.authenticate()
     }
 
     async SetEx(
@@ -65,4 +65,4 @@ class MemCacheUtility {
     }
 }
 
-export default new MemCacheUtility(new MemCache())
+export default new RedisUtility(new Redis())

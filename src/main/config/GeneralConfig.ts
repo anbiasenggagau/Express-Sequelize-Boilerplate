@@ -1,6 +1,3 @@
-import dotenv from "dotenv"
-dotenv.config()
-
 const data = {
     NODE_ENV: process.env.NODE_ENV,
     SERVER_PORT: process.env.SERVER_PORT,

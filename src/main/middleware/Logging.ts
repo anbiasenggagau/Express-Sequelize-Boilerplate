@@ -1,5 +1,6 @@
 import expres from "express"
 import { performance } from "perf_hooks"
+import Logging from "../config/LoggingConfig"
 
 export function handleLogging(req: expres.Request, res: expres.Response, next: expres.NextFunction) {
     const start = performance.now()
@@ -22,17 +23,18 @@ export function handleLogging(req: expres.Request, res: expres.Response, next: e
 }
 
 async function logging(req: expres.Request, res: expres.Response, start: number) {
-    console.log("======================================================")
-    console.log(
-        {
-            time: new Date().toString(),
-            method: req.method,
-            ipClient: req.ip,
-            originalUrl: req.originalUrl,
-            user: req.user,
-            responseTime: performance.now() - start,
-            statusCode: res.statusCode,
-        }
+    Logging.info(
+        `
+{
+    time: ${new Date().toString()},
+    method: ${req.method},
+    ipClient: ${req.ip},
+    originalUrl: ${req.originalUrl},
+    user: ${req.user},
+    responseTime: ${performance.now() - start},
+    statusCode: ${res.statusCode},
+}
+`
     )
-    console.log("======================================================")
+    Logging.info("======================================================")
 }

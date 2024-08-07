@@ -3,11 +3,12 @@ import { StatusCode } from "../const"
 import expres from "express"
 import { ForeignKeyConstraintError, ValidationError as ValidationErrorSequelize } from "sequelize"
 import BaseResponse from "../api/.BaseResponse"
+import Logging from "../config/LoggingConfig"
 
 const response = new BaseResponse()
 
 export function handleError(error: unknown, req: expres.Request, res: expres.Response, next: expres.NextFunction) {
-    console.log(error)
+    Logging.warn(error)
     if (error instanceof ErrorHandler)  // Handle error from manually thrown error
         return response.handleErrorStatusCode(res, error.statusCode, error.message, error.errorValidationList)
     else if (error instanceof ValidationErrorSequelize)   // Handle error from sequelize validation

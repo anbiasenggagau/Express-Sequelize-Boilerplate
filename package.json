@@ -5,10 +5,10 @@
   "main": "index.ts",
   "scripts": {
     "start": "node ./dist/main/index.js",
-    "start-trace": "node --require ./dist/trace/instrumentation.js ./dist/main/index.js",
+    "start-trace": "node --require ./dist/instrumentation/instrumentation.js ./dist/main/index.js",
     "build": "rm -rf ./dist && tsc",
     "dev": "nodemon -L ./src/main/index.ts",
-    "dev-trace": "nodemon -L --require ./src/trace/instrumentation.ts ./src/main/index.ts"
+    "dev-trace": "nodemon -L --require ./src/instrumentation/instrumentation.ts ./src/main/index.ts"
   },
   "author": "anbiasenggagau",
   "license": "ISC",
@@ -28,7 +28,9 @@
     "redis": "^4.6.13",
     "sequelize": "^6.36.0",
     "sequelize-typescript": "^2.1.6",
-    "uuid": "^10.0.0"
+    "uuid": "^10.0.0",
+    "winston": "^3.13.1",
+    "winston-loki": "^6.1.2"
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",

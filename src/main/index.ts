@@ -1,12 +1,14 @@
+import dotenv from "dotenv"
+dotenv.config()
+
 import express, { Request, Response } from "express"
 import cors from "cors"
 import config from "./config/GeneralConfig"
 import router from "./routes"
 import DB from "./config/DBConfig"
-import dotenv from "dotenv"
 import { handleError } from "./middleware/ErrorHandler"
 import { handleLogging } from "./middleware/Logging"
-dotenv.config()
+import Logging from "./config/LoggingConfig"
 
 DB.forEach((value) => {
     value.authenticate()
@@ -17,6 +19,7 @@ DB.forEach((value) => {
 })
 
 const app = express()
+app.set('trust proxy', true)
 app.use(cors())
 app.use(express.urlencoded({ extended: true }))
 app.use(express.json({ limit: "5mb" }))
@@ -35,5 +38,5 @@ router.forEach(value => {
 app.use(handleError)
 
 app.listen(config.SERVER_PORT, () => {
-    console.log("Listen to port " + config.SERVER_PORT)
+    Logging.info("Listen to port " + config.SERVER_PORT)
 })

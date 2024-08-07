@@ -8,9 +8,8 @@ const otlpExporter = new OTLPTraceExporter({
     url: process.env.TRACING_URI
 })
 
-console.log(otlpExporter)
 const sdk = new NodeSDK({
-    serviceName: "Express-Sequelize-Boilerplate",
+    serviceName: process.env.SERVICE_NAME,
     traceExporter: otlpExporter,
     instrumentations: [getNodeAutoInstrumentations()],
 })

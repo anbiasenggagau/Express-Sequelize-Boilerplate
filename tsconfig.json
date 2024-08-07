@@ -110,6 +110,6 @@
     "node_modules"
   ],
   "files": [
-    "./src/main/types.d.ts"
+    "./src/main/types.d.ts",
   ]
 }
