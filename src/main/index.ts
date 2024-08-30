@@ -12,10 +12,6 @@ import Logging from "./config/LoggingConfig"
 
 DB.forEach((value) => {
     value.authenticate()
-
-    // Only implement on development environment
-    // if (config.NODE_ENV == "development")
-    //     value.sync({ alter: true })
 })
 
 const app = express()

@@ -4,11 +4,14 @@
   "description": "",
   "main": "index.ts",
   "scripts": {
+    "build": "rm -rf ./dist && tsc",
     "start": "node ./dist/main/index.js",
     "start-trace": "node --require ./dist/instrumentation/instrumentation.js ./dist/main/index.js",
-    "build": "rm -rf ./dist && tsc",
     "dev": "nodemon -L ./src/main/index.ts",
-    "dev-trace": "nodemon -L --require ./src/instrumentation/instrumentation.ts ./src/main/index.ts"
+    "dev-trace": "nodemon -L --require ./src/instrumentation/instrumentation.ts ./src/main/index.ts",
+    "migration:generate": "npx sequelize-cli migration:generate --migrations-path ./migrations --name",
+    "migration:up": "npx sequelize-cli db:migrate --migrations-path ./migrations --config ./migrations/config/config.js",
+    "migration:down": "npx sequelize-cli db:migrate:undo --migrations-path ./migrations --config ./migrations/config/config.js"
   },
   "author": "anbiasenggagau",
   "license": "ISC",
@@ -27,6 +30,7 @@
     "pg": "^8.11.3",
     "redis": "^4.6.13",
     "sequelize": "^6.36.0",
+    "sequelize-cli": "^6.6.2",
     "sequelize-typescript": "^2.1.6",
     "uuid": "^10.0.0",
     "winston": "^3.13.1",
@@ -37,6 +41,7 @@
     "@types/cors": "^2.8.17",
     "@types/express": "^4.17.21",
     "@types/jsonwebtoken": "^9.0.5",
-    "nodemon": "^3.0.3"
+    "nodemon": "^3.0.3",
+    "typescript": "^5.5.4"
   }
 }
