@@ -7,7 +7,7 @@ import { TokenPayload, authenticate } from "../../middleware/Authentication"
 
 const app = express.Router()
 
-class CustomersController extends BaseController {
+class UsersController extends BaseController {
     private handler = new UsersHandler()
     private response = new UsersResponse()
 
@@ -63,4 +63,4 @@ class CustomersController extends BaseController {
     }
 }
 
-export default new CustomersController().router()
+export default new UsersController().router()
