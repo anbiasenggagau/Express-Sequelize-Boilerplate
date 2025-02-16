@@ -4,7 +4,7 @@ import StoresRepo from "../../model/repository/StoresRepo"
 import { CreateAttributeBody, UpdateAttributeValidation } from "./Request"
 
 class StoresHandler {
-    private Repository = StoresRepo
+    private readonly Repository = StoresRepo
 
     async handleCreateStores(identity: TokenPayload, body: CreateAttributeBody) {
         const result = await this.Repository.findOrCreate(

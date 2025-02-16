@@ -5,8 +5,8 @@ import StoresRepo from "../../model/repository/StoresRepo"
 import { CreateAttributeBody, UpdateAttributeValidation, paginationType } from "./Request"
 
 class ProductsHandler {
-    private Repository = ProductsRepo
-    private StoreRepository = StoresRepo
+    private readonly Repository = ProductsRepo
+    private readonly StoreRepository = StoresRepo
 
     async handleCreateProducts(identity: TokenPayload, body: CreateAttributeBody) {
         const store = await this.StoreRepository.getSingleData({
@@ -28,11 +28,7 @@ class ProductsHandler {
     }
 
     async handleGetAllProducts(identity: TokenPayload, pagination: paginationType) {
-        return await this.Repository.getAndCountData({
-            where: {},
-            limit: pagination.pageSize,
-            offset: (pagination.page - 1) * pagination.pageSize
-        })
+        return await this.Repository.getPaginationData(pagination)
     }
 
     async handleUpdateProducts(identity: TokenPayload, body: UpdateAttributeValidation, id: string) {

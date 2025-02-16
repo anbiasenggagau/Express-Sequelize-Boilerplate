@@ -9,7 +9,7 @@ import SessionUtility from "../../utility/SessionUtiliity"
 import { v7 } from "uuid"
 
 class AuthHandler {
-    private userRepo = UsersRepo
+    private readonly userRepo = UsersRepo
 
     async handleRefreshToken(identity: RefreshToken) {
         const check = await SessionUtility.checkBeforeRenewAccessToken(identity)

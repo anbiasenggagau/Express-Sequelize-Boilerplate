@@ -14,9 +14,10 @@ unprotectedRoute.use(AuthRoute)
 unprotectedRoute.use(UsersRole)
 
 // Protected Route
-protectedRoute.use(authenticate, CustomersRoute)
-protectedRoute.use(authenticate, ProductsRoute)
-protectedRoute.use(authenticate, StoresRoute)
+protectedRoute.use(authenticate)
+protectedRoute.use(CustomersRoute)
+protectedRoute.use(ProductsRoute)
+protectedRoute.use(StoresRoute)
 
 // Do not change the sequence
 // in order to make unprotected route keep unprotected

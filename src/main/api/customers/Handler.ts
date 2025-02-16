@@ -4,7 +4,7 @@ import CustomersRepo from "../../model/repository/CustomersRepo";
 import { CreateAttributesBody, UpdateAttributesBody } from "./Request";
 
 class CustomersHandler {
-    private Repository = CustomersRepo
+    private readonly Repository = CustomersRepo
     async handleCreateCustomer(identity: TokenPayload, body: CreateAttributesBody) {
         const result = await this.Repository.findOrCreate(
             {

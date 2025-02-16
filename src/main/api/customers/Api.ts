@@ -8,8 +8,8 @@ import CustomersResponse from "./Response"
 const app = express.Router()
 
 class CustomersController extends BaseController {
-    private handler = new CustomersHandler()
-    private response = new CustomersResponse()
+    private readonly handler = new CustomersHandler()
+    private readonly response = new CustomersResponse()
 
     router() {
         app.post("/customers", createAttributesValidation, async (req: express.Request, res: express.Response, next: express.NextFunction) => {

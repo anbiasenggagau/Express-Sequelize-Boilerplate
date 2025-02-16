@@ -8,8 +8,8 @@ import { TokenPayload, authenticate } from "../../middleware/Authentication"
 const app = express.Router()
 
 class UsersController extends BaseController {
-    private handler = new UsersHandler()
-    private response = new UsersResponse()
+    private readonly handler = new UsersHandler()
+    private readonly response = new UsersResponse()
 
     router() {
         app.post("/users", createAttributesValidation, async (req: express.Request, res: express.Response, next: express.NextFunction) => {

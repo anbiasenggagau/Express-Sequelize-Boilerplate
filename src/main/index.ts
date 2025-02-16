@@ -3,16 +3,15 @@ dotenv.config()
 
 import express, { Request, Response } from "express"
 import cors from "cors"
-import config from "./config/GeneralConfig"
+import expressEndpoint from "express-list-endpoints"
+import config, { initializeConnection } from "./config/GeneralConfig"
 import router from "./routes"
-import DB from "./config/DBConfig"
 import { handleError } from "./middleware/ErrorHandler"
 import { handleLogging } from "./middleware/Logging"
+import * as constant from "./const"
 import Logging from "./config/LoggingConfig"
 
-DB.forEach((value) => {
-    value.authenticate()
-})
+initializeConnection()
 
 const app = express()
 app.set('trust proxy', true)
@@ -25,6 +24,15 @@ app.get("/", (req: Request, res: Response) => {
     return res.send("Connected to server")
 })
 
+app.get("/api/v1/dropdowns", (req, res) => {
+    return res.status(200).json({ ...constant })
+})
+
+const endpoints: expressEndpoint.Endpoint[] = []
+app.get("/api/v1/endpoints", (req, res) => {
+    return res.status(200).json(endpoints)
+})
+
 // Route Assignment
 router.forEach(value => {
     app.use("/api/v1", value)
@@ -32,6 +40,16 @@ router.forEach(value => {
 
 // Custom Error Handler
 app.use(handleError)
+
+endpoints.push(...expressEndpoint(app).map(value => {
+    if (
+        value.path == "/" ||
+        value.path == "/api/v1/dropdowns" ||
+        value.path == "/api/v1/endpoints"
+    ) return
+    delete (value as any).middlewares
+    return value
+}).filter(value => value != undefined))
 
 app.listen(config.SERVER_PORT, () => {
     Logging.info("Listen to port " + config.SERVER_PORT)

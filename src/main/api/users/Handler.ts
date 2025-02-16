@@ -7,7 +7,7 @@ import ErrorHandler from "../../middleware/ErrorHandler";
 import SessionUtility from "../../utility/SessionUtiliity";
 
 class UsersHandler {
-    private Repository = UsersRepo
+    private readonly Repository = UsersRepo
 
     async handleCreateNewUser(body: CreateAttributesBody) {
         return await this.Repository.insertNewData({

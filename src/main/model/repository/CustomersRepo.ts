@@ -12,4 +12,4 @@ class CustomersRepo extends BaseRepository<Customers, CustomersAttributes, Custo
     }
 }
 
-export default new CustomersRepo(Customers as any)
+export default new CustomersRepo(Customers)

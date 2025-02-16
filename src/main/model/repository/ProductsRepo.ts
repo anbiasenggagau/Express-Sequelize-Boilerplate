@@ -5,4 +5,4 @@ class ProductsRepo extends BaseRepository<Products, ProductsAttributes, Products
 
 }
 
-export default new ProductsRepo(Products as any)
+export default new ProductsRepo(Products)

@@ -8,8 +8,8 @@ import { RefreshToken, TokenPayload, authenticate, refresh } from "../../middlew
 const app = express.Router()
 
 class CustomersController extends BaseController {
-    private response = new AuthResponse()
-    private handler = new AuthHandler()
+    private readonly response = new AuthResponse()
+    private readonly handler = new AuthHandler()
 
     router() {
         app.post("/auth/login", loginAttributeValidation, async (req: express.Request, res: express.Response, next: express.NextFunction) => {

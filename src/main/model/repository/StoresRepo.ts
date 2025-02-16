@@ -21,4 +21,4 @@ class StoresRepo extends BaseRepository<Stores, StoresAttributes, StoresCreation
     }
 }
 
-export default new StoresRepo(Stores as any)
+export default new StoresRepo(Stores)

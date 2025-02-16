@@ -5,4 +5,4 @@ class UsersRepo extends BaseRepository<Users, UsersAttributes, UsersCreationAttr
 
 }
 
-export default new UsersRepo(Users as any)
+export default new UsersRepo(Users)
