@@ -1,8 +1,9 @@
-import amqpConn from "./BrokerConfig"
+import { initBroker } from "./BrokerConfig"
 import DB from "./DBConfig"
 
 const data = {
     NODE_ENV: process.env.NODE_ENV,
+    SERVICE_NAME: process.env.SERVICE_NAME!,
     SERVER_PORT: process.env.SERVER_PORT,
     REFRESH_TOKEN: Boolean(process.env.REFRESH_TOKEN),
     JWT_SECRET: process.env.JWT_SECRET!,
@@ -13,11 +14,10 @@ const data = {
 }
 
 export async function initializeConnection() {
-    DB.forEach((value) => {
-        value.authenticate()
+    DB.forEach(async (value) => {
+        await value.authenticate()
     })
-    amqpConn
-
+    initBroker()
 }
 
 export default {

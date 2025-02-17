@@ -10,8 +10,13 @@ import { handleError } from "./middleware/ErrorHandler"
 import { handleLogging } from "./middleware/Logging"
 import * as constant from "./const"
 import Logging from "./config/LoggingConfig"
+import listenConsumers from "./consumer"
 
+// Initialize Connection
 initializeConnection()
+
+// Register All Consumers
+listenConsumers()
 
 const app = express()
 app.set('trust proxy', true)
@@ -28,6 +33,7 @@ app.get("/api/v1/dropdowns", (req, res) => {
     return res.status(200).json({ ...constant })
 })
 
+// List all endpoints
 const endpoints: expressEndpoint.Endpoint[] = []
 app.get("/api/v1/endpoints", (req, res) => {
     return res.status(200).json(endpoints)
@@ -41,6 +47,7 @@ router.forEach(value => {
 // Custom Error Handler
 app.use(handleError)
 
+// Push all endpoints after all routes assigned
 endpoints.push(...expressEndpoint(app).map(value => {
     if (
         value.path == "/" ||
