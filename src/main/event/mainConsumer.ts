@@ -9,7 +9,7 @@ async function registerConsumer() {
         handler,
         {
             consumer: { noAck: true },
-            queue: { autoDelete: true, durable: true }
+            queue: { autoDelete: false, durable: true }
         }
     )
 }

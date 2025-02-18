@@ -30,6 +30,7 @@
     "express-list-endpoints": "^7.1.1",
     "express-validator": "^7.0.1",
     "jsonwebtoken": "^9.0.2",
+    "memcache-client": "^1.0.5",
     "pg": "^8.11.3",
     "redis": "^4.6.13",
     "sequelize": "^6.36.0",
