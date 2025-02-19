@@ -15,7 +15,7 @@ class CustomersController extends BaseController {
         app.post("/auth/login", loginAttributeValidation, async (req: express.Request, res: express.Response, next: express.NextFunction) => {
             try {
                 super.validateRequest(req)
-                const body: LoginAttributeBody = { ...req.body }
+                const body: LoginAttributeBody = req.body
 
                 const result = await this.handler.handleLogin(body)
                 return this.response.OKWithData(res, "Success", result)

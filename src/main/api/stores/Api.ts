@@ -1,25 +1,24 @@
 import express from "express"
 import BaseController from "../.BaseController"
-import StoresHandler from "./Handler"
+import StoreHandler from "./Handler"
 import { CreateAttributeBody, UpdateAttributeValidation, createAttributesValidation, updateAttributeValidation } from "./Request"
-import { TokenPayload } from "../../middleware/Authentication"
-import StoresResponse from "./Response"
+import StoreResponse from "./Response"
 
 const app = express.Router()
 
-class StoresController extends BaseController {
-    private readonly handler = new StoresHandler()
-    private readonly response = new StoresResponse()
+class StoreController extends BaseController {
+    private readonly handler = new StoreHandler()
+    private readonly response = new StoreResponse()
 
     router() {
         app.post("/stores", createAttributesValidation, async (req: express.Request, res: express.Response, next: express.NextFunction) => {
             try {
                 super.validateRequest(req)
-                const body: CreateAttributeBody = { ...req.body }
-                const identity: TokenPayload = req.user
+                const body: CreateAttributeBody = req.body
+                const identity = super.getIdentity(req)
 
-                const data = await this.handler.handleCreateStores(identity, body)
-                return this.response.CreatedNewData(res, "Success", data.Id)
+                const data = await this.handler.handleCreateStore(identity, body)
+                return this.response.CreatedNewData(res, "Success", data.id)
             } catch (error) {
                 next(error)
             }
@@ -28,10 +27,10 @@ class StoresController extends BaseController {
         app.put("/stores", updateAttributeValidation, async (req: express.Request, res: express.Response, next: express.NextFunction) => {
             try {
                 super.validateRequest(req)
-                const body: UpdateAttributeValidation = { ...req.body }
-                const identity: TokenPayload = req.user
+                const body: UpdateAttributeValidation = req.body
+                const identity = super.getIdentity(req)
 
-                await this.handler.handleUpdateStores(identity, body)
+                await this.handler.handleUpdateStore(identity, body)
                 return this.response.OKWithEmptyData(res, "Success")
             } catch (error) {
                 next(error)
@@ -41,7 +40,7 @@ class StoresController extends BaseController {
         app.get("/stores", async (req: express.Request, res: express.Response, next: express.NextFunction) => {
             try {
                 super.validateRequest(req)
-                const identity: TokenPayload = req.user
+                const identity = super.getIdentity(req)
 
                 const result = await this.handler.handleGetAllProducts(identity)
                 return this.response.OKWithData(res, "Success", result)
@@ -55,4 +54,4 @@ class StoresController extends BaseController {
     }
 }
 
-export default new StoresController().router()
+export default new StoreController().router()

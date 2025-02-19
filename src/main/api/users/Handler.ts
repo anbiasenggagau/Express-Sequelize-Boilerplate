@@ -1,4 +1,4 @@
-import UsersRepo from "../../model/repository/UsersRepo";
+import UserRepo from "../../model/repository/UserRepo";
 import { CreateAttributesBody, UpdateAttributesBody } from "./Request";
 import configData from "../../config/GeneralConfig"
 import bcrypt from "bcryptjs"
@@ -6,30 +6,27 @@ import { TokenPayload } from "../../middleware/Authentication";
 import ErrorHandler from "../../middleware/ErrorHandler";
 import SessionUtility from "../../utility/SessionUtiliity";
 
-class UsersHandler {
-    private readonly Repository = UsersRepo
+class UserHandler {
+    private readonly userRepo = UserRepo
 
-    async handleCreateNewUser(body: CreateAttributesBody) {
-        return await this.Repository.insertNewData({
-            Email: body.email,
-            Password: bcrypt.hashSync(body.password, configData.ENCRYPTION_SALT),
-            Username: body.username
-        })
+    async handleCreateNewUser(identity: TokenPayload, body: CreateAttributesBody) {
+        return await this.userRepo.insertNewData(
+            {
+                ...body,
+                password: bcrypt.hashSync(body.password, configData.ENCRYPTION_SALT),
+            },
+            { identity }
+        )
     }
 
     async handleUpdateUser(identity: TokenPayload, body: UpdateAttributesBody) {
-        const password = body.password ? bcrypt.hashSync(body.password, configData.ENCRYPTION_SALT) : undefined
+        body.password = body.password ? bcrypt.hashSync(body.password, configData.ENCRYPTION_SALT) : undefined
 
-        const result = await this.Repository.updateData(
+        const result = await this.userRepo.updateData(
+            { ...body, },
             {
-                Email: body.email,
-                Password: password,
-                Username: body.username
-            },
-            {
-                where: {
-                    Id: identity.id
-                }
+                where: { id: identity.id },
+                identity,
             }
         )
 
@@ -39,10 +36,9 @@ class UsersHandler {
     }
 
     async handleDeleteUser(identity: TokenPayload) {
-        const result = await this.Repository.deleteData({
-            where: {
-                Id: identity.id
-            }
+        const result = await this.userRepo.deleteData({
+            where: { id: identity.id },
+            identity,
         })
 
         if (result == 0) throw new ErrorHandler(404, "User not found or already deleted")
@@ -52,19 +48,18 @@ class UsersHandler {
     }
 
     async handleGetSingleUser(identity: TokenPayload) {
-        const result = await this.Repository.getSingleData({
-            where: {
-                Id: identity.id
-            }
+        const result = await this.userRepo.getSingleData({
+            where: { id: identity.id }
         })
+        if (!result) throw new ErrorHandler(404, "Not found")
 
         return {
-            id: result?.Id,
-            email: result?.Email,
-            username: result?.Username,
-            createdAt: result?.CreatedAt
+            id: result.id,
+            email: result.email,
+            username: result.username,
+            createdAt: result.createdAt
         }
     }
 }
 
-export default UsersHandler
+export default UserHandler

@@ -1,24 +1,25 @@
 import express from "express"
 import BaseController from "../.BaseController"
-import UsersResponse from "./Response"
+import UserResponse from "./Response"
 import { CreateAttributesBody, UpdateAttributesBody, createAttributesValidation, updateAttributesValidation } from "./Request"
-import UsersHandler from "./Handler"
+import UserHandler from "./Handler"
 import { TokenPayload, authenticate } from "../../middleware/Authentication"
 
 const app = express.Router()
 
-class UsersController extends BaseController {
-    private readonly handler = new UsersHandler()
-    private readonly response = new UsersResponse()
+class UserController extends BaseController {
+    private readonly handler = new UserHandler()
+    private readonly response = new UserResponse()
 
     router() {
         app.post("/users", createAttributesValidation, async (req: express.Request, res: express.Response, next: express.NextFunction) => {
             try {
                 super.validateRequest(req)
-                const body: CreateAttributesBody = { ...req.body }
+                const identity = super.getIdentity(req)
+                const body: CreateAttributesBody = req.body
 
-                const data = await this.handler.handleCreateNewUser(body)
-                return this.response.CreatedNewData(res, "Success", data.Id)
+                const data = await this.handler.handleCreateNewUser(identity, body)
+                return this.response.CreatedNewData(res, "Success", data.id)
             } catch (error) {
                 next(error)
             }
@@ -27,7 +28,7 @@ class UsersController extends BaseController {
         app.put("/users", authenticate, updateAttributesValidation, async (req: express.Request, res: express.Response, next: express.NextFunction) => {
             try {
                 super.validateRequest(req)
-                const body: UpdateAttributesBody = { ...req.body }
+                const body: UpdateAttributesBody = req.body
                 const identity: TokenPayload = { ...req.user }
 
                 await this.handler.handleUpdateUser(identity, body)
@@ -63,4 +64,4 @@ class UsersController extends BaseController {
     }
 }
 
-export default new UsersController().router()
+export default new UserController().router()

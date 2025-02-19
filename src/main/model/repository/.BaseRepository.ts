@@ -2,6 +2,24 @@ import { BOOLEAN, DATE, DECIMAL, INTEGER, STRING, TEXT, BIGINT, SMALLINT, DOUBLE
 import { ModelCtor } from "sequelize-typescript"
 import { PaginationType } from "../../api/.BaseController"
 import ErrorHandler from "../../middleware/ErrorHandler"
+import { Col, Fn, Literal } from "sequelize/lib/utils"
+
+type UnionAllFieldWithNewTypes<T, U extends any[]> = {
+    [K in keyof T]: T[K] | U[number];
+}
+
+type LoggingAttribute = {
+    /**
+     * createdBy or updatedBy will be filled based on token payload.
+     * Will be replaced if createdBy or updatedBy is defined.
+     */
+    identity?: { username: string }
+    /**
+     * Will create a logging data for all changes to data_history table.
+     * The default value will be true
+     */
+    logHistory?: boolean
+}
 
 type QueryOption<T> = {
     where: WhereOptions<T>
@@ -38,19 +56,24 @@ type CountOption<T> = {
 
 type CreateOption = {
     transaction?: Transaction
-}
+} & LoggingAttribute
+
+type CreateBulkOption<T> = {
+    updateOnDuplicate?: (keyof T)[]
+    transaction?: Transaction
+    conflictAttributes?: (keyof T)[]
+} & LoggingAttribute
 
 type UpdateOption<T> = {
     where: WhereOptions<T>
     transaction?: Transaction
-}
+} & LoggingAttribute
 
-type DeleteOption<T> = {
+type DeleteOption<T> = ({
     where: WhereOptions<T>
     transaction?: Transaction
     force?: false
     simmulateForceDelete?: false
-    additionalField?: any
 } | {
     where: WhereOptions<T>
     transaction?: Transaction
@@ -61,7 +84,6 @@ type DeleteOption<T> = {
      * Transaction will be required if this option is true
     */
     simmulateForceDelete?: false
-    additionalField?: any
 } | {
     where: WhereOptions<T>
     transaction: Transaction
@@ -72,13 +94,12 @@ type DeleteOption<T> = {
      * Transaction will be required if this option is true
     */
     simmulateForceDelete: true
-    additionalField?: any
-}
+}) & LoggingAttribute
 
 type RestoreOption<T> = {
     where: WhereOptions<T>
     transaction?: Transaction
-}
+} & LoggingAttribute
 
 interface ModelInstance<T> {
     new(): T
@@ -143,7 +164,47 @@ abstract class BaseRepository<TModelInstance extends Model, TModelAttributes, TC
     }
 
     async insertNewData(CreationAttributes: TCreationAttributes, CreateOption?: CreateOption): Promise<TModelInstance> {
+        const attributes = Object.keys(this.getAllAttributes())
+        const defaultOptions = {
+            logHistory: true,
+            conflictAttributes: [this.model.primaryKeyAttribute]
+        }
+
+        CreateOption = { ...defaultOptions, ...CreateOption }
+        if ((CreationAttributes as any)["createdBy"])
+            CreateOption.identity = { username: (CreationAttributes as any)["createdBy"] }
+
+        CreationAttributes = {
+            ...CreationAttributes,
+            createdBy: attributes.includes("createdBy") ? CreateOption?.identity?.username : undefined,
+            updatedBy: attributes.includes("updatedBy") ? CreateOption?.identity?.username : undefined,
+        }
         return await this.model.create({ ...CreationAttributes }, { ...CreateOption, validate: true })
+    }
+
+    async insertBulkData(CreationAttributes: TCreationAttributes[], CreateOption?: CreateBulkOption<TModelAttributes>): Promise<TModelInstance[]> {
+        const attributes = Object.keys(this.getAllAttributes())
+        const fieldCreateExist = attributes.includes("createdBy")
+        const fieldUpdateExist = attributes.includes("updatedBy")
+        let replaced = false
+        const defaultOptions = {
+            logHistory: true,
+            conflictAttributes: [this.model.primaryKeyAttribute]
+        }
+        CreateOption = { ...defaultOptions, ...CreateOption }
+
+        if ((CreationAttributes[0] as any)["createdBy"]) {
+            CreateOption.identity = { username: (CreationAttributes[0] as any)["createdBy"] }
+            replaced = true
+        }
+
+        if ((!replaced && CreateOption.identity) && (fieldCreateExist || fieldUpdateExist))
+            for (const [index, _] of CreationAttributes.entries()) {
+                (CreationAttributes[index] as any).createdBy = fieldCreateExist ? CreateOption.identity.username : (CreationAttributes[index] as any).createdBy;
+                (CreationAttributes[index] as any).updatedBy = fieldUpdateExist ? CreateOption.identity.username : (CreationAttributes[index] as any).updatedBy;
+            }
+
+        return await this.model.bulkCreate(CreationAttributes, { ...CreateOption, validate: true })
     }
 
     async getAllData(QueryOption: QueryOption<TModelAttributes>): Promise<TModelInstance[]> {
@@ -192,11 +253,25 @@ abstract class BaseRepository<TModelInstance extends Model, TModelAttributes, TC
         return await this.model.count({ ...CountOption })
     }
 
-    async updateData(CreationAttributes: Partial<TCreationAttributes>, UpdateOption: UpdateOption<TModelAttributes>): Promise<[affectedCount: number, affectedRows: TModelInstance[]]> {
-        return await this.model.update({ ...CreationAttributes }, { ...UpdateOption, returning: true })
+    async updateData(UpdateAttributes: UnionAllFieldWithNewTypes<Partial<TCreationAttributes>, [Literal, Fn, Col]>, UpdateOption: UpdateOption<TModelAttributes>): Promise<[affectedCount: number, affectedRows: TModelInstance[]]> {
+        let fieldExist = false
+        if (UpdateOption.logHistory == undefined) UpdateOption.logHistory = true
+        if ((UpdateAttributes as any)["updatedBy"]) {
+            UpdateOption.identity = { username: (UpdateAttributes as any)["updatedBy"] }
+            fieldExist = true
+        }
+
+        UpdateAttributes = {
+            ...UpdateAttributes,
+            updatedBy: fieldExist || Object.keys(this.getAllAttributes()).includes("updatedBy") ? UpdateOption?.identity?.username : undefined,
+        }
+        return await this.model.update({ ...UpdateAttributes }, { ...UpdateOption, returning: true })
     }
 
     async deleteData(DeleteOption: DeleteOption<TModelAttributes>): Promise<number> {
+        const fieldExist = Object.keys(this.getAllAttributes()).includes("deletedBy")
+        if (DeleteOption.logHistory == undefined) DeleteOption.logHistory = true
+
         if (DeleteOption.simmulateForceDelete === true) {
             if (this.model.options.paranoid === false)
                 throw new ErrorHandler(500, "Unexpected behaviour. Model should implement paranoid")
@@ -211,11 +286,34 @@ abstract class BaseRepository<TModelInstance extends Model, TModelAttributes, TC
             })
             await savePoint.rollback()
 
-            return await this.model.destroy({
-                ...DeleteOption,
-                force: false,
-            })
+            const [result, _] = await this.model.update(
+                {
+                    deletedBy: fieldExist ? DeleteOption.identity?.username : "System",
+                    deletedAt: new Date(),
+                },
+                {
+                    ...DeleteOption,
+                    force: false,
+                    paranoid: false,
+                })
+
+            return result
         }
+
+        if (this.model.options.paranoid === true && !DeleteOption.force) {
+            const [result, _] = await this.model.update(
+                {
+                    deletedBy: fieldExist ? DeleteOption.identity?.username : "System",
+                    deletedAt: new Date(),
+                },
+                {
+                    ...DeleteOption,
+                    paranoid: false,
+                })
+
+            return result
+        }
+
         return await this.model.destroy({
             ...DeleteOption,
         })

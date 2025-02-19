@@ -15,7 +15,9 @@ const data = {
 
 export async function initializeConnection() {
     DB.forEach(async (value) => {
-        await value.authenticate()
+        await value.instance.authenticate()
+        if (value.afterConnect)
+            value.afterConnect(value.instance)
     })
     initBroker()
 }

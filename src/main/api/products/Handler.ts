@@ -1,56 +1,42 @@
 import { TokenPayload } from "../../middleware/Authentication"
 import ErrorHandler from "../../middleware/ErrorHandler"
-import ProductsRepo from "../../model/repository/ProductsRepo"
-import StoresRepo from "../../model/repository/StoresRepo"
+import ProductRepo from "../../model/repository/ProductRepo"
+import StoresRepo from "../../model/repository/StoreRepo"
 import { CreateAttributeBody, UpdateAttributeValidation, paginationType } from "./Request"
 
-class ProductsHandler {
-    private readonly Repository = ProductsRepo
-    private readonly StoreRepository = StoresRepo
+class ProductHandler {
+    private readonly productRepo = ProductRepo
+    private readonly storeRepository = StoresRepo
 
-    async handleCreateProducts(identity: TokenPayload, body: CreateAttributeBody) {
-        const store = await this.StoreRepository.getSingleData({
-            where: {
-                UserId: identity.id
-            }
+    async handleCreateProduct(identity: TokenPayload, body: CreateAttributeBody) {
+        const store = await this.storeRepository.getSingleData({
+            where: { userId: identity.id }
         })
-
         if (store == null) throw new ErrorHandler(404, "Store hasn't been created")
 
-        return await this.Repository.insertNewData({
-            Name: body.name,
-            Price: body.price,
-            Currency: body.currency,
-            StoreId: store.Id,
-            CreatedBy: identity.id,
-            UpdatedBy: identity.id
-        })
+        return await this.productRepo.insertNewData(
+            {
+                ...body,
+                storeId: store.id,
+            },
+            { identity }
+        )
     }
 
-    async handleGetAllProducts(identity: TokenPayload, pagination: paginationType) {
-        return await this.Repository.getPaginationData(pagination)
-    }
-
-    async handleUpdateProducts(identity: TokenPayload, body: UpdateAttributeValidation, id: string) {
-        const store = await this.StoreRepository.getSingleData({
-            where: {
-                UserId: identity.id
-            }
+    async handleUpdateProduct(identity: TokenPayload, body: UpdateAttributeValidation, id: string) {
+        const store = await this.storeRepository.getSingleData({
+            where: { userId: identity.id }
         })
-
         if (store == null) throw new ErrorHandler(404, "Store hasn't been created")
 
-        const result = await this.Repository.updateData({
-            Name: body.name,
-            Price: body.price,
-            Currency: body.currency,
-            UpdatedBy: identity.id
-        },
+        const result = await this.productRepo.updateData(
+            { ...body },
             {
                 where: {
-                    Id: id,
-                    StoreId: store.Id
-                }
+                    id: id,
+                    storeId: store.id
+                },
+                identity,
             })
 
         if (result[0] == 0) throw new ErrorHandler(404, "Product not found")
@@ -58,26 +44,27 @@ class ProductsHandler {
         return true
     }
 
-    async handleDeleteProducts(identity: TokenPayload, id: string) {
-        const store = await this.StoreRepository.getSingleData({
-            where: {
-                UserId: identity.id
-            }
+    async handleDeleteProduct(identity: TokenPayload, id: string) {
+        const store = await this.storeRepository.getSingleData({
+            where: { userId: identity.id }
         })
-
         if (store == null) throw new ErrorHandler(404, "Store hasn't been created")
 
-        const result = await this.Repository.deleteData({
+        const result = await this.productRepo.deleteData({
             where: {
-                Id: id,
-                StoreId: store.Id
-            }
+                id: id,
+                storeId: store.id
+            },
+            identity,
         })
-
         if (result == 0) throw new ErrorHandler(404, "Product not found")
 
         return true
     }
+
+    async handleGetProductsList(identity: TokenPayload, pagination: paginationType) {
+        return await this.productRepo.getPaginationData(pagination)
+    }
 }
 
-export default ProductsHandler
+export default ProductHandler

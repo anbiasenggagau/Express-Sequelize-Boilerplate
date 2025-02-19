@@ -1,19 +1,17 @@
 import { TokenPayload } from "../../middleware/Authentication"
 import ErrorHandler from "../../middleware/ErrorHandler"
-import StoresRepo from "../../model/repository/StoresRepo"
+import StoreRepo from "../../model/repository/StoreRepo"
 import { CreateAttributeBody, UpdateAttributeValidation } from "./Request"
 
-class StoresHandler {
-    private readonly Repository = StoresRepo
+class StoreHandler {
+    private readonly storeRepo = StoreRepo
 
-    async handleCreateStores(identity: TokenPayload, body: CreateAttributeBody) {
-        const result = await this.Repository.findOrCreate(
+    async handleCreateStore(identity: TokenPayload, body: CreateAttributeBody) {
+        const result = await this.storeRepo.findOrCreate(
+            { userId: identity.id },
             {
-                UserId: identity.id
-            },
-            {
-                UserId: identity.id,
-                Name: body.name
+                ...body,
+                userId: identity.id,
             }
         )
 
@@ -22,15 +20,12 @@ class StoresHandler {
         return result[0]
     }
 
-    async handleUpdateStores(identity: TokenPayload, body: UpdateAttributeValidation) {
-        const result = await this.Repository.updateData(
+    async handleUpdateStore(identity: TokenPayload, body: UpdateAttributeValidation) {
+        const result = await this.storeRepo.updateData(
+            { ...body, },
             {
-                Name: body.name
-            },
-            {
-                where: {
-                    UserId: identity.id
-                }
+                where: { userId: identity.id },
+                identity,
             }
         )
 
@@ -40,8 +35,8 @@ class StoresHandler {
     }
 
     async handleGetAllProducts(identity: TokenPayload) {
-        return await this.Repository.getProductsFromAllStores()
+        return await this.storeRepo.getProductsFromAllStore()
     }
 }
 
-export default StoresHandler
+export default StoreHandler

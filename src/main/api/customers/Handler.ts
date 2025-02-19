@@ -1,22 +1,20 @@
 import { TokenPayload } from "../../middleware/Authentication";
 import ErrorHandler from "../../middleware/ErrorHandler";
-import CustomersRepo from "../../model/repository/CustomersRepo";
+import CustomerRepo from "../../model/repository/CustomerRepo";
+import { PaginationType } from "../.BaseController";
 import { CreateAttributesBody, UpdateAttributesBody } from "./Request";
 
-class CustomersHandler {
-    private readonly Repository = CustomersRepo
+class CustomerHandler {
+    private readonly customerRepo = CustomerRepo
+
     async handleCreateCustomer(identity: TokenPayload, body: CreateAttributesBody) {
-        const result = await this.Repository.findOrCreate(
+        const result = await this.customerRepo.findOrCreate(
             {
-                UserId: identity.id
+                userId: identity.id
             },
             {
-                Name: body.name,
-                PhoneNumber: body.phoneNumber,
-                Address: body.address,
-                UserId: identity.id,
-                CreatedBy: identity.id,
-                UpdatedBy: identity.id
+                ...body,
+                userId: identity.id
             })
 
         if (!result[1]) throw new ErrorHandler(400, "Already initialized your own")
@@ -24,29 +22,22 @@ class CustomersHandler {
         return result[0]
     }
 
-    async handleGetAllCustomers(identity: TokenPayload) {
-        return await this.Repository.getAllData(
+    async handleUpdateCustomer(identity: TokenPayload, body: UpdateAttributesBody) {
+        await this.customerRepo.updateData(
             {
-                where: {},
-            }
-        )
-    }
-
-    async handleUpdateCustomers(identity: TokenPayload, body: UpdateAttributesBody) {
-        await this.Repository.updateData({
-            Address: body.address,
-            Name: body.name,
-            PhoneNumber: body.phoneNumber,
-            UpdatedBy: identity.id
-        },
+                ...body
+            },
             {
-                where: {
-                    UserId: identity.id
-                }
+                where: { userId: identity.id },
+                identity,
             })
 
         return true
     }
+
+    async handleGetCustomersList(identity: TokenPayload, pagination: PaginationType) {
+        return await this.customerRepo.getPaginationData(pagination)
+    }
 }
 
-export default CustomersHandler
+export default CustomerHandler

@@ -1,4 +1,4 @@
-import UsersRepo from "../../model/repository/UsersRepo"
+import UsersRepo from "../../model/repository/UserRepo"
 import bcrypt from "bcryptjs"
 import jwt from "jsonwebtoken"
 import { LoginAttributeBody, } from "./Request"
@@ -29,19 +29,19 @@ class AuthHandler {
 
         if (result == null) throw new ErrorHandler(404, "User Not Found")
 
-        const checkPassword = bcrypt.compareSync(body.password, result.Password)
+        const checkPassword = bcrypt.compareSync(body.password, result.password)
         if (!checkPassword) throw new ErrorHandler(400, "Wrong password")
 
         const accessTokenObject = {
-            id: result.Id,
-            username: result.Username
+            id: result.id,
+            username: result.username
         }
         const accessToken = jwt.sign(accessTokenObject, configData.JWT_SECRET, { expiresIn: configData.JWT_EXPIRATION })
 
         if (configData.REFRESH_TOKEN) {
             const refreshTokenObject = {
-                id: result.Id,
-                username: result.Username,
+                id: result.id,
+                username: result.username,
                 refresh: true,
                 refreshId: v7()
             }

@@ -1,25 +1,24 @@
 import express from "express"
 import { CreateAttributesBody, UpdateAttributesBody, createAttributesValidation, updateAttributesValidation } from "./Request"
-import { TokenPayload } from "../../middleware/Authentication"
-import CustomersHandler from "./Handler"
+import CustomerHandler from "./Handler"
 import BaseController from "../.BaseController"
-import CustomersResponse from "./Response"
+import CustomerResponse from "./Response"
 
 const app = express.Router()
 
-class CustomersController extends BaseController {
-    private readonly handler = new CustomersHandler()
-    private readonly response = new CustomersResponse()
+class CustomerController extends BaseController {
+    private readonly handler = new CustomerHandler()
+    private readonly response = new CustomerResponse()
 
     router() {
         app.post("/customers", createAttributesValidation, async (req: express.Request, res: express.Response, next: express.NextFunction) => {
             try {
                 super.validateRequest(req)
-                const body: CreateAttributesBody = { ...req.body }
-                const identity: TokenPayload = req.user
+                const body: CreateAttributesBody = req.body
+                const identity = super.getIdentity(req)
 
                 const data = await this.handler.handleCreateCustomer(identity, body)
-                return this.response.CreatedNewData(res, "Success", data.Id)
+                return this.response.CreatedNewData(res, "Success", data.id)
             } catch (error) {
                 next(error)
             }
@@ -27,10 +26,11 @@ class CustomersController extends BaseController {
 
         app.get("/customers", async (req: express.Request, res: express.Response, next: express.NextFunction) => {
             try {
-                const identity: TokenPayload = req.user
+                const identity = super.getIdentity(req)
+                const pagination = super.initPagination(req)
 
-                const result = await this.handler.handleGetAllCustomers(identity)
-                return this.response.OKWithData(res, "Success", result)
+                const result = await this.handler.handleGetCustomersList(identity, pagination)
+                return this.response.OKWithDataPagination(res, "Success", result.rows, pagination, result.count)
             } catch (error) {
                 next(error)
             }
@@ -39,10 +39,10 @@ class CustomersController extends BaseController {
         app.put("/customers", updateAttributesValidation, async (req: express.Request, res: express.Response, next: express.NextFunction) => {
             try {
                 super.validateRequest(req)
-                const identity: TokenPayload = req.user
-                const body: UpdateAttributesBody = { ...req.body }
+                const identity = super.getIdentity(req)
+                const body: UpdateAttributesBody = req.body
 
-                await this.handler.handleUpdateCustomers(identity, body)
+                await this.handler.handleUpdateCustomer(identity, body)
                 return this.response.OKWithEmptyData(res, "Success")
             } catch (error) {
                 next(error)
@@ -53,4 +53,4 @@ class CustomersController extends BaseController {
     }
 }
 
-export default new CustomersController().router()
+export default new CustomerController().router()

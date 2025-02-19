@@ -1,6 +1,7 @@
 import express from "express"
 import { checkExact, query, validationResult } from "express-validator"
 import ErrorHandler from "../middleware/ErrorHandler"
+import { TokenPayload } from "../middleware/Authentication"
 
 export type PaginationType = {
     page: number
@@ -45,6 +46,11 @@ abstract class BaseController {
         if (req.query.page_size) result.pageSize = parseInt(req.query.page_size as string)
         if (req.query.include_deleted == "true") result.softDeleted = true
 
+        return result
+    }
+
+    public getIdentity(req: express.Request): TokenPayload {
+        const result = { ...req.user }
         return result
     }
 }

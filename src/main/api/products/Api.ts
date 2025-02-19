@@ -1,25 +1,24 @@
 import express from "express"
 import BaseController from "../.BaseController"
-import ProductsHandler from "./Handler"
+import ProductHandler from "./Handler"
 import { CreateAttributeBody, UpdateAttributeValidation, createAttributesValidation, deleteValidation, paginationType, paginationValidation, updateAttributeValidation } from "./Request"
-import { TokenPayload } from "../../middleware/Authentication"
-import ProductsResponse from "./Response"
+import ProductResponse from "./Response"
 
 const app = express.Router()
 
-class ProductsController extends BaseController {
-    private readonly handler = new ProductsHandler()
-    private readonly response = new ProductsResponse()
+class ProductController extends BaseController {
+    private readonly handler = new ProductHandler()
+    private readonly response = new ProductResponse()
 
     router() {
         app.post("/products", createAttributesValidation, async (req: express.Request, res: express.Response, next: express.NextFunction) => {
             try {
                 super.validateRequest(req)
-                const body: CreateAttributeBody = { ...req.body }
-                const identity: TokenPayload = req.user
+                const body: CreateAttributeBody = req.body
+                const identity = super.getIdentity(req)
 
-                const data = await this.handler.handleCreateProducts(identity, body)
-                return this.response.CreatedNewData(res, "Success", data.Id)
+                const data = await this.handler.handleCreateProduct(identity, body)
+                return this.response.CreatedNewData(res, "Success", data.id)
             } catch (error) {
                 next(error)
             }
@@ -27,13 +26,13 @@ class ProductsController extends BaseController {
 
         app.get("/products", paginationValidation, async (req: express.Request, res: express.Response, next: express.NextFunction) => {
             try {
-                const identity: TokenPayload = req.user
+                const identity = super.getIdentity(req)
                 const pagination: paginationType = {
                     page: req.query.page ? parseInt(req.query.page as string) : 1,
                     pageSize: req.query.page_size ? parseInt(req.query.page_size as string) : 10
                 }
 
-                const result = await this.handler.handleGetAllProducts(identity, pagination)
+                const result = await this.handler.handleGetProductsList(identity, pagination)
                 return this.response.OKWithDataPagination(
                     res,
                     "Success",
@@ -49,11 +48,11 @@ class ProductsController extends BaseController {
         app.put("/products", updateAttributeValidation, async (req: express.Request, res: express.Response, next: express.NextFunction) => {
             try {
                 super.validateRequest(req)
-                const body: UpdateAttributeValidation = { ...req.body }
+                const body: UpdateAttributeValidation = req.body
                 const id: string = req.query.id as string
-                const identity: TokenPayload = req.user
+                const identity = super.getIdentity(req)
 
-                await this.handler.handleUpdateProducts(identity, body, id)
+                await this.handler.handleUpdateProduct(identity, body, id)
                 return this.response.OKWithEmptyData(res, "Success")
             } catch (error) {
                 next(error)
@@ -64,9 +63,9 @@ class ProductsController extends BaseController {
             try {
                 super.validateRequest(req)
                 const id: string = req.query.id as string
-                const identity: TokenPayload = req.user
+                const identity = super.getIdentity(req)
 
-                await this.handler.handleDeleteProducts(identity, id)
+                await this.handler.handleDeleteProduct(identity, id)
                 return this.response.OKWithEmptyData(res, "Success")
             } catch (error) {
                 next(error)
@@ -77,4 +76,4 @@ class ProductsController extends BaseController {
     }
 }
 
-export default new ProductsController().router()
+export default new ProductController().router()
