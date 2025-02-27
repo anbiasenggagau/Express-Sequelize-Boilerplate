@@ -32,7 +32,7 @@ class UserController extends BaseController {
                 const identity: TokenPayload = { ...req.user }
 
                 await this.handler.handleUpdateUser(identity, body)
-                return this.response.OKWithEmptyData(res, "Success")
+                return this.response.OK(res, "Success")
             } catch (error) {
                 next(error)
             }
@@ -43,7 +43,7 @@ class UserController extends BaseController {
                 const identity: TokenPayload = { ...req.user }
 
                 await this.handler.handleDeleteUser(identity)
-                return this.response.OKWithEmptyData(res, "Success")
+                return this.response.OK(res, "Success")
             } catch (error) {
                 next(error)
             }
@@ -54,7 +54,7 @@ class UserController extends BaseController {
                 const identity: TokenPayload = { ...req.user }
 
                 const result = await this.handler.handleGetSingleUser(identity)
-                return this.response.OKWithData(res, "Success", result)
+                return this.response.OK(res, "Success", result)
             } catch (error) {
                 next(error)
             }

@@ -3,20 +3,32 @@ import { CreateAttributesBody, UpdateAttributesBody } from "./Request";
 import configData from "../../config/GeneralConfig"
 import bcrypt from "bcryptjs"
 import { TokenPayload } from "../../middleware/Authentication";
-import ErrorHandler from "../../middleware/ErrorHandler";
+import ErrorHandler, { TransactionErrorHandler } from "../../middleware/ErrorHandler";
 import SessionUtility from "../../utility/SessionUtiliity";
 
 class UserHandler {
     private readonly userRepo = UserRepo
 
     async handleCreateNewUser(identity: TokenPayload, body: CreateAttributesBody) {
-        return await this.userRepo.insertNewData(
-            {
-                ...body,
-                password: bcrypt.hashSync(body.password, configData.ENCRYPTION_SALT),
-            },
-            { identity }
-        )
+        const transaction = await this.userRepo.startTransaction()
+        try {
+            const result = await this.userRepo.insertNewData(
+                {
+                    ...body,
+                    password: bcrypt.hashSync(body.password, configData.ENCRYPTION_SALT),
+                },
+                {
+                    transaction,
+                    identity,
+                }
+            )
+
+            await transaction.commit()
+            return result
+        } catch (error) {
+            await transaction.rollback()
+            throw new TransactionErrorHandler(error)
+        }
     }
 
     async handleUpdateUser(identity: TokenPayload, body: UpdateAttributesBody) {

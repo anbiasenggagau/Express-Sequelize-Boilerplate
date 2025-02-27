@@ -7,6 +7,8 @@ import configData from "../../config/GeneralConfig"
 import { RefreshToken, TokenPayload } from "../../middleware/Authentication"
 import SessionUtility from "../../utility/SessionUtiliity"
 import { v7 } from "uuid"
+import { WhereOptions } from "sequelize"
+import { UserAttributes } from "../../model/entity/User"
 
 class AuthHandler {
     private readonly userRepo = UsersRepo
@@ -19,9 +21,9 @@ class AuthHandler {
     }
 
     async handleLogin(body: LoginAttributeBody): Promise<{ token: string } | { accessToken: string, refreshToken: string }> {
-        let whereQuery: any = {}
-        if (body.email) whereQuery.Email = body.email
-        else whereQuery.Username = body.username
+        let whereQuery: WhereOptions<UserAttributes> = {}
+        if (body.email) whereQuery.email = body.email
+        else whereQuery.username = body.username
 
         const result = await this.userRepo.getSingleData({
             where: { ...whereQuery }

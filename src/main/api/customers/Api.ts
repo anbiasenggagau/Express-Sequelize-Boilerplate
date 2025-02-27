@@ -30,7 +30,7 @@ class CustomerController extends BaseController {
                 const pagination = super.initPagination(req)
 
                 const result = await this.handler.handleGetCustomersList(identity, pagination)
-                return this.response.OKWithDataPagination(res, "Success", result.rows, pagination, result.count)
+                return this.response.OK(res, "Success", pagination, { data: result.rows, count: result.count })
             } catch (error) {
                 next(error)
             }
@@ -43,7 +43,7 @@ class CustomerController extends BaseController {
                 const body: UpdateAttributesBody = req.body
 
                 await this.handler.handleUpdateCustomer(identity, body)
-                return this.response.OKWithEmptyData(res, "Success")
+                return this.response.OK(res, "Success")
             } catch (error) {
                 next(error)
             }

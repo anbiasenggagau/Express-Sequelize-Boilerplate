@@ -1,7 +1,11 @@
-import { Dialect } from "sequelize";
-import { Sequelize } from "sequelize-typescript";
-import Logging from "./LoggingConfig";
+import { Dialect, CreateOptions, Transaction } from "sequelize"
+import { Sequelize } from "sequelize-typescript"
+import Logging from "./LoggingConfig"
 import path from 'path'
+import DataHistoryRepo from "../model/repository/DataHistoryRepo"
+import { LoggingAttribute } from "../model/repository/.BaseRepository"
+
+type OverridingTransaction = { transaction: Transaction | undefined }
 
 const DB: {
     instance: Sequelize
@@ -28,22 +32,50 @@ export const mainDb = new Sequelize({
         Logging.info(message)
     },
     hooks: {
-        beforeCreate(attributes, options) {
-            console.log(attributes)
-        },
-        beforeBulkCreate(instances, options) {
+        async beforeBulkCreate(instances, options) {
             console.log(instances)
         },
-        beforeUpdate(instance, options) {
+        async beforeUpdate(instance, options) {
             console.log(instance)
         },
-        beforeBulkUpdate(options) {
+        async beforeBulkUpdate(options) {
             console.log(options)
         },
-        beforeDestroy(instance, options) {
+        async beforeDestroy(instance, options) {
             console.log(instance)
         },
-        beforeBulkDestroy(options) {
+        async beforeBulkDestroy(options) {
+            console.log(options)
+        },
+
+        async afterCreate(attributes, options: CreateOptions & LoggingAttribute & OverridingTransaction) {
+            if (options.logHistory)
+                await DataHistoryRepo.insertNewData(
+                    {
+                        modelName: attributes.constructor.name,
+                        idModelName: attributes.dataValues.id,
+                        valueAfter: attributes.dataValues,
+                        updatedBy: options.identity?.username ?? "System"
+                    },
+                    {
+                        transaction: options.transaction,
+                        logHistory: false,
+                    }
+                )
+        },
+        async afterBulkCreate(instances, options) {
+            console.log(instances)
+        },
+        async afterUpdate(instance, options) {
+            console.log(instance)
+        },
+        async afterBulkUpdate(options) {
+            console.log(options)
+        },
+        async afterDestroy(instance, options) {
+            console.log(instance)
+        },
+        async afterBulkDestroy(options) {
             console.log(options)
         },
     }

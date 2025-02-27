@@ -18,7 +18,7 @@ class CustomersController extends BaseController {
                 const body: LoginAttributeBody = req.body
 
                 const result = await this.handler.handleLogin(body)
-                return this.response.OKWithData(res, "Success", result)
+                return this.response.OK(res, "Success", result)
             } catch (error) {
                 next(error)
             }
@@ -29,7 +29,7 @@ class CustomersController extends BaseController {
                 const identity: TokenPayload | RefreshToken = req.user
 
                 await this.handler.handleLogout(identity)
-                return this.response.OKWithEmptyData(res, "Success")
+                return this.response.OK(res, "Success")
             } catch (error) {
                 next(error)
             }
@@ -40,7 +40,7 @@ class CustomersController extends BaseController {
                 const identity: RefreshToken = req.user
 
                 const data = await this.handler.handleRefreshToken(identity)
-                return this.response.OKWithData(res, "Success", data)
+                return this.response.OK(res, "Success", data)
             } catch (error) {
                 next(error)
             }

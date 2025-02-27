@@ -31,7 +31,7 @@ class StoreController extends BaseController {
                 const identity = super.getIdentity(req)
 
                 await this.handler.handleUpdateStore(identity, body)
-                return this.response.OKWithEmptyData(res, "Success")
+                return this.response.OK(res, "Success")
             } catch (error) {
                 next(error)
             }
@@ -43,7 +43,7 @@ class StoreController extends BaseController {
                 const identity = super.getIdentity(req)
 
                 const result = await this.handler.handleGetAllProducts(identity)
-                return this.response.OKWithData(res, "Success", result)
+                return this.response.OK(res, "Success", result)
             } catch (error) {
                 next(error)
             }

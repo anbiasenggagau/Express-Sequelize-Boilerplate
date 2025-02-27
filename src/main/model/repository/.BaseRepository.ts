@@ -8,7 +8,7 @@ type UnionAllFieldWithNewTypes<T, U extends any[]> = {
     [K in keyof T]: T[K] | U[number];
 }
 
-type LoggingAttribute = {
+export type LoggingAttribute = {
     /**
      * createdBy or updatedBy will be filled based on token payload.
      * Will be replaced if createdBy or updatedBy is defined.
@@ -165,21 +165,20 @@ abstract class BaseRepository<TModelInstance extends Model, TModelAttributes, TC
 
     async insertNewData(CreationAttributes: TCreationAttributes, CreateOption?: CreateOption): Promise<TModelInstance> {
         const attributes = Object.keys(this.getAllAttributes())
-        const defaultOptions = {
-            logHistory: true,
-            conflictAttributes: [this.model.primaryKeyAttribute]
-        }
+        const defaultOptions = { logHistory: true }
 
         CreateOption = { ...defaultOptions, ...CreateOption }
         if ((CreationAttributes as any)["createdBy"])
             CreateOption.identity = { username: (CreationAttributes as any)["createdBy"] }
+        else if ((CreationAttributes as any)["updatedBy"])
+            CreateOption.identity = { username: (CreationAttributes as any)["updatedBy"] }
 
         CreationAttributes = {
             ...CreationAttributes,
             createdBy: attributes.includes("createdBy") ? CreateOption?.identity?.username : undefined,
             updatedBy: attributes.includes("updatedBy") ? CreateOption?.identity?.username : undefined,
         }
-        return await this.model.create({ ...CreationAttributes }, { ...CreateOption, validate: true })
+        return await this.model.create(CreationAttributes, CreateOption)
     }
 
     async insertBulkData(CreationAttributes: TCreationAttributes[], CreateOption?: CreateBulkOption<TModelAttributes>): Promise<TModelInstance[]> {

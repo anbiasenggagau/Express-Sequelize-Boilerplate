@@ -1,43 +1,50 @@
 import express from "express"
 import { ValidationError } from "express-validator"
 import { StatusCode } from "../const"
+import { PaginationType } from "./.BaseController"
+
+type DataWithCount<T> = {
+    data: T[]
+    count: number
+}
 
 class BaseResponse {
-    OKWithEmptyData(response: express.Response, message: string) {
-        const finalResponse = {
-            message,
-            statusCode: 200
+    OK(response: express.Response, message: string): express.Response;
+    OK<T>(response: express.Response, message: string, data: T): express.Response;
+    OK<T>(response: express.Response, message: string, pagination: PaginationType, data: DataWithCount<T>): express.Response;
+    OK<T>(response: express.Response, message: string, paginationOrData?: PaginationType | T | DataWithCount<T>, dataOrUndefined?: DataWithCount<T>): express.Response {
+        if (paginationOrData === undefined && dataOrUndefined === undefined) {
+            return response.status(200).json({
+                message,
+                statusCode: 200
+            })
         }
-
-        return response.status(200).json(finalResponse)
-    }
-
-    OKWithData<T>(response: express.Response, message: string, data: T) {
-        const finalResponse = {
-            message,
-            statusCode: 200,
-            data
+        else if (paginationOrData && !Array.isArray((paginationOrData as any).data)) {
+            return response.status(200).json({
+                message,
+                statusCode: 200,
+                data: paginationOrData
+            })
         }
+        else {
+            const pagination = paginationOrData as PaginationType
+            const dataWithCount = dataOrUndefined as DataWithCount<T>
+            const paginationResult = this.constructPagination(pagination, dataWithCount.count)
 
-        return response.status(200).json(finalResponse)
-    }
+            if (pagination.page > paginationResult.totalPages) {
+                return response.status(404).json({
+                    message: "Not Data Found",
+                    statusCode: 404
+                })
+            }
 
-    OKWithDataPagination<T>(response: express.Response, message: string, data: T[], pagination: { page: number, pageSize: number }, dataTotal: number) {
-        const paginationResult = this.constructPagination(pagination, dataTotal)
-
-        if (pagination.page > paginationResult.totalPages) return response.status(404).json({
-            message: "Not Data Found",
-            statusCode: 404
-        })
-
-        const finalResponse = {
-            message,
-            statusCode: 200,
-            ...paginationResult,
-            data
+            return response.status(200).json({
+                message,
+                statusCode: 200,
+                ...paginationResult,
+                data: dataWithCount.data
+            })
         }
-
-        return response.status(200).json(finalResponse)
     }
 
     CreatedNewData<T>(response: express.Response, message: string, id: number | string) {

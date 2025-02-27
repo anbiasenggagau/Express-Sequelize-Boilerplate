@@ -33,13 +33,7 @@ class ProductController extends BaseController {
                 }
 
                 const result = await this.handler.handleGetProductsList(identity, pagination)
-                return this.response.OKWithDataPagination(
-                    res,
-                    "Success",
-                    result.rows,
-                    pagination,
-                    result.count
-                )
+                return this.response.OK(res, "Success", pagination, { data: result.rows, count: result.count })
             } catch (error) {
                 next(error)
             }
@@ -53,7 +47,7 @@ class ProductController extends BaseController {
                 const identity = super.getIdentity(req)
 
                 await this.handler.handleUpdateProduct(identity, body, id)
-                return this.response.OKWithEmptyData(res, "Success")
+                return this.response.OK(res, "Success")
             } catch (error) {
                 next(error)
             }
@@ -66,7 +60,7 @@ class ProductController extends BaseController {
                 const identity = super.getIdentity(req)
 
                 await this.handler.handleDeleteProduct(identity, id)
-                return this.response.OKWithEmptyData(res, "Success")
+                return this.response.OK(res, "Success")
             } catch (error) {
                 next(error)
             }
