@@ -28,6 +28,13 @@ class ArrayUtilty {
         })
     }
 
+    /**
+     * Check two given arrays are identical or not.
+     * It also works for array of object.
+     * Note: This function only check single level of object, not nested object. 
+     * If the object is nested, it will compare the reference of the nested
+     *  object thus it always return false
+     */
     static checkIfIdentical(arr1: any[], arr2: any[], compareField?: string) {
         let objectkeys: string[] = []
         if (arr1.length !== arr2.length)
