@@ -19,7 +19,7 @@ class BaseResponse {
                 statusCode: 200
             })
         }
-        else if (paginationOrData && !Array.isArray((paginationOrData as any).data)) {
+        else if (paginationOrData && (!paginationOrData.hasOwnProperty("page") && !paginationOrData.hasOwnProperty("pageSize"))) {
             return response.status(200).json({
                 message,
                 statusCode: 200,

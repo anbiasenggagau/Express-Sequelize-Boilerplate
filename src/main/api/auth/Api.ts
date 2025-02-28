@@ -37,7 +37,7 @@ class CustomersController extends BaseController {
 
         app.post("/auth/refresh", refresh, async (req: express.Request, res: express.Response, next: express.NextFunction) => {
             try {
-                const identity: RefreshToken = req.user
+                const identity = req.user as RefreshToken
 
                 const data = await this.handler.handleRefreshToken(identity)
                 return this.response.OK(res, "Success", data)

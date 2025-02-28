@@ -1,14 +1,17 @@
-import { WhereOptions } from "sequelize";
+import { Transaction, WhereOptions } from "sequelize";
 import Store, { StoreAttributes, StoreCreationAttributes } from "../entity/Store";
 import BaseRepository from "./.BaseRepository";
 import Products from "../entity/Product";
 
 class StoreRepo extends BaseRepository<Store, StoreAttributes, StoreCreationAttributes> {
-    async findOrCreate(whereQuery: WhereOptions<StoreAttributes>, valueCreation: StoreCreationAttributes) {
-        return await Store.findOrCreate({
+    async findOrCreate(whereQuery: WhereOptions<StoreAttributes>, valueCreation: StoreCreationAttributes, transaction?: Transaction) {
+        const storeData = await Store.findOne({
             where: { ...whereQuery },
-            defaults: { ...valueCreation }
+            transaction,
         })
+        if (storeData) return storeData
+
+        return await this.insertNewData(valueCreation, { transaction })
     }
 
     async getProductsFromAllStore() {

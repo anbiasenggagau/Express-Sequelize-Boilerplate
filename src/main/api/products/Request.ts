@@ -1,4 +1,4 @@
-import { body, query } from "express-validator";
+import { body, param, query } from "express-validator";
 
 export const createAttributesValidation = [
     body("name")
@@ -33,7 +33,7 @@ export const paginationValidation = [
 ]
 
 export const deleteValidation = [
-    query("id")
+    param("id")
         .exists()
 ]
 

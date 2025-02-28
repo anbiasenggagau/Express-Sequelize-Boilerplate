@@ -56,12 +56,14 @@ type CountOption<T> = {
 
 type CreateOption = {
     transaction?: Transaction
+    hooks?: boolean
 } & LoggingAttribute
 
 type CreateBulkOption<T> = {
     updateOnDuplicate?: (keyof T)[]
     transaction?: Transaction
     conflictAttributes?: (keyof T)[]
+    hooks?: boolean
 } & LoggingAttribute
 
 type UpdateOption<T> = {
@@ -182,6 +184,7 @@ abstract class BaseRepository<TModelInstance extends Model, TModelAttributes, TC
     }
 
     async insertBulkData(CreationAttributes: TCreationAttributes[], CreateOption?: CreateBulkOption<TModelAttributes>): Promise<TModelInstance[]> {
+        if (CreationAttributes.length == 0) return []
         const attributes = Object.keys(this.getAllAttributes())
         const fieldCreateExist = attributes.includes("createdBy")
         const fieldUpdateExist = attributes.includes("updatedBy")
@@ -276,7 +279,7 @@ abstract class BaseRepository<TModelInstance extends Model, TModelAttributes, TC
                 throw new ErrorHandler(500, "Unexpected behaviour. Model should implement paranoid")
 
             // Create save point
-            const savePoint = this.model.sequelize.transaction({ transaction: DeleteOption.transaction })
+            const savePoint = await this.model.sequelize.transaction({ transaction: DeleteOption.transaction })
 
             await this.model.destroy({
                 ...DeleteOption,

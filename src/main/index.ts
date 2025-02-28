@@ -1,7 +1,7 @@
 import dotenv from "dotenv"
 dotenv.config()
 
-import express, { Request, Response } from "express"
+import express from "express"
 import cors from "cors"
 import expressEndpoint from "express-list-endpoints"
 import config, { initializeConnection } from "./config/GeneralConfig"
@@ -25,7 +25,7 @@ app.use(express.urlencoded({ extended: true }))
 app.use(express.json({ limit: "5mb" }))
 app.use(handleLogging)
 
-app.get("/", (req: Request, res: Response) => {
+app.get("/", (req: express.Request, res: express.Response) => {
     return res.send("Connected to server")
 })
 

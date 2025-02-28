@@ -27,7 +27,7 @@ export function authenticate(req: express.Request, res: express.Response, next: 
 
     jwt.verify(token, configData.JWT_SECRET, async (err, user) => {
         if (err) return res.status(401).json({ message: err.message })
-        req.user = user
+        req.user = user as TokenPayload
 
         if (!configData.REFRESH_TOKEN) {
             const blocked = await SessionUtility.getBlockedToken(req.user)
@@ -49,7 +49,7 @@ export function refresh(req: express.Request, res: express.Response, next: expre
         if (err) return res.status(401).json({ message: err.message })
         if (!configData.REFRESH_TOKEN) return res.sendStatus(501)
 
-        req.user = user
+        req.user = user as TokenPayload
         next()
     })
 }

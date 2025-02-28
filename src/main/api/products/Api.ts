@@ -53,10 +53,10 @@ class ProductController extends BaseController {
             }
         })
 
-        app.delete("/products", deleteValidation, async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+        app.delete("/products/:id", deleteValidation, async (req: express.Request, res: express.Response, next: express.NextFunction) => {
             try {
                 super.validateRequest(req)
-                const id: string = req.query.id as string
+                const id = req.params.id
                 const identity = super.getIdentity(req)
 
                 await this.handler.handleDeleteProduct(identity, id)

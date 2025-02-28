@@ -1,11 +1,13 @@
-import { Dialect, CreateOptions, Transaction } from "sequelize"
+import { Dialect, CreateOptions, UpdateOptions, DestroyOptions, InstanceUpdateOptions, InstanceDestroyOptions, Transaction } from "sequelize"
 import { Sequelize } from "sequelize-typescript"
 import Logging from "./LoggingConfig"
 import path from 'path'
 import DataHistoryRepo from "../model/repository/DataHistoryRepo"
 import { LoggingAttribute } from "../model/repository/.BaseRepository"
+import ArrayUtility from "../utility/ArrayUtility"
 
 type OverridingTransaction = { transaction: Transaction | undefined }
+type DataBefore = { dataBefore: any[] }
 
 const DB: {
     instance: Sequelize
@@ -32,24 +34,8 @@ export const mainDb = new Sequelize({
         Logging.info(message)
     },
     hooks: {
-        async beforeBulkCreate(instances, options) {
-            console.log(instances)
-        },
-        async beforeUpdate(instance, options) {
-            console.log(instance)
-        },
-        async beforeBulkUpdate(options) {
-            console.log(options)
-        },
-        async beforeDestroy(instance, options) {
-            console.log(instance)
-        },
-        async beforeBulkDestroy(options) {
-            console.log(options)
-        },
-
         async afterCreate(attributes, options: CreateOptions & LoggingAttribute & OverridingTransaction) {
-            if (options.logHistory)
+            if (options.logHistory === true || options.logHistory === undefined)
                 await DataHistoryRepo.insertNewData(
                     {
                         modelName: attributes.constructor.name,
@@ -60,23 +46,148 @@ export const mainDb = new Sequelize({
                     {
                         transaction: options.transaction,
                         logHistory: false,
+                        hooks: false
                     }
                 )
         },
+
+        async beforeBulkUpdate(options: UpdateOptions & LoggingAttribute & DataBefore & OverridingTransaction) {
+            if (options.logHistory === true || options.logHistory === undefined) {
+                const modelInstance = (this as any).sequelize.models[(this as any).name]
+                const dataBefore = await modelInstance.findAll({
+                    where: options.where,
+                    order: [[modelInstance.primaryKeyAttribute, "DESC"]],
+                    transaction: options.transaction,
+                    paranoid: false,
+                })
+                options.dataBefore = dataBefore
+            }
+        },
+        async afterBulkUpdate(options: UpdateOptions & LoggingAttribute & DataBefore & OverridingTransaction) {
+            if (options.logHistory === true || options.logHistory === undefined) {
+                const modelName = (this as any).name
+                const modelInstance = (this as any).sequelize.models[modelName]
+                const dataAfter = await modelInstance.findAll({
+                    where: options.where,
+                    order: [[modelInstance.primaryKeyAttribute, "DESC"]],
+                    transaction: options.transaction,
+                    paranoid: false,
+                })
+
+                if (dataAfter.length == 0) return
+                if (!ArrayUtility.checkIfIdentical(
+                    options.dataBefore.map((value: any) => ({
+                        ...value.dataValues,
+                        createdAt: value.dataValues.createdAt === null,
+                        createdBy: value.dataValues.createdBy === null,
+                        updatedAt: value.dataValues.updatedAt === null,
+                        updatedBy: value.dataValues.updatedBy === null,
+                        deletedAt: value.dataValues.deletedAt === null,
+                        deletedBy: value.dataValues.deletedBy === null,
+                    })),
+                    dataAfter.map((value: any) => ({
+                        ...value.dataValues,
+                        createdAt: value.dataValues.createdAt === null,
+                        createdBy: value.dataValues.createdBy === null,
+                        updatedAt: value.dataValues.updatedAt === null,
+                        updatedBy: value.dataValues.updatedBy === null,
+                        deletedAt: value.dataValues.deletedAt === null,
+                        deletedBy: value.dataValues.deletedBy === null,
+                    }))
+                )) {
+                    await DataHistoryRepo.insertBulkData(
+                        dataAfter.map((value: any, index: number) => {
+                            return {
+                                modelName: modelName,
+                                idModelName: value.dataValues.id,
+                                valueAfter: value.dataValues,
+                                valueBefore: options.dataBefore[index].dataValues,
+                                updatedBy: options.identity?.username ?? "System"
+                            }
+                        }),
+                        {
+                            transaction: options.transaction,
+                            logHistory: false,
+                        }
+                    )
+                }
+                delete (options as any).dataBefore
+            }
+        },
+
+        async afterUpdate(instance, options: InstanceUpdateOptions & LoggingAttribute & OverridingTransaction) {
+            if (options.logHistory === true || options.logHistory === undefined)
+                await DataHistoryRepo.insertNewData(
+                    {
+                        modelName: instance.constructor.name,
+                        idModelName: instance.dataValues.id,
+                        valueAfter: instance.dataValues,
+                        valueBefore: (instance as any)._previousDataValues,
+                        updatedBy: options.identity?.username ?? "System"
+                    },
+                    {
+                        transaction: options.transaction,
+                        logHistory: false,
+                        hooks: false
+                    }
+                )
+        },
+
+        async beforeBulkDestroy(options: DestroyOptions & LoggingAttribute & DataBefore & OverridingTransaction) {
+            if (options.logHistory === true || options.logHistory === undefined) {
+                const modelInstance = (this as any).sequelize.models[(this as any).name]
+                const dataBefore = await modelInstance.findAll({
+                    where: options.where,
+                    order: [[modelInstance.primaryKeyAttribute, "DESC"]],
+                    transaction: options.transaction,
+                    paranoid: false,
+                })
+                options.dataBefore = dataBefore
+            }
+        },
+        async afterBulkDestroy(options: DestroyOptions & LoggingAttribute & DataBefore & OverridingTransaction) {
+            if (options.dataBefore.length != 0 && options.logHistory === true || options.logHistory === undefined) {
+                const modelName = (this as any).name
+                await DataHistoryRepo.insertBulkData(
+                    options.dataBefore.map((value: any, index: number) => {
+                        return {
+                            modelName: modelName,
+                            idModelName: value.dataValues.id,
+                            valueBefore: options.dataBefore[index].dataValues,
+                            updatedBy: options.identity?.username ?? "System"
+                        }
+                    }),
+                    {
+                        transaction: options.transaction,
+                        logHistory: false,
+                        hooks: false
+                    }
+                )
+            }
+        },
+
+        async afterDestroy(instance, options: InstanceDestroyOptions & LoggingAttribute & OverridingTransaction) {
+            if (options.logHistory === true || options.logHistory === undefined)
+                await DataHistoryRepo.insertNewData(
+                    {
+                        modelName: instance.constructor.name,
+                        idModelName: instance.dataValues.id,
+                        valueBefore: (instance as any)._previousDataValues,
+                        updatedBy: options.identity?.username ?? "System"
+                    },
+                    {
+                        transaction: options.transaction,
+                        logHistory: false,
+                        hooks: false
+                    }
+                )
+        },
+
         async afterBulkCreate(instances, options) {
-            console.log(instances)
+            // console.log(instances)
         },
-        async afterUpdate(instance, options) {
-            console.log(instance)
-        },
-        async afterBulkUpdate(options) {
-            console.log(options)
-        },
-        async afterDestroy(instance, options) {
-            console.log(instance)
-        },
-        async afterBulkDestroy(options) {
-            console.log(options)
+        async beforeBulkCreate(instances, options) {
+            // console.log(instances)
         },
     }
 })

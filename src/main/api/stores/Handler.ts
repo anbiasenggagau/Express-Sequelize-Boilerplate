@@ -15,9 +15,7 @@ class StoreHandler {
             }
         )
 
-        if (!result[1]) throw new ErrorHandler(400, "You already create your own store")
-
-        return result[0]
+        return result
     }
 
     async handleUpdateStore(identity: TokenPayload, body: UpdateAttributeValidation) {
@@ -29,7 +27,7 @@ class StoreHandler {
             }
         )
 
-        if (result[0] == 0) throw new ErrorHandler(404, "Your store not found")
+        if (result[1].length == 0) throw new ErrorHandler(404, "Your store not found")
 
         return true
     }

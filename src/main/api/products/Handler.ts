@@ -1,5 +1,5 @@
 import { TokenPayload } from "../../middleware/Authentication"
-import ErrorHandler from "../../middleware/ErrorHandler"
+import ErrorHandler, { TransactionErrorHandler } from "../../middleware/ErrorHandler"
 import ProductRepo from "../../model/repository/ProductRepo"
 import StoresRepo from "../../model/repository/StoreRepo"
 import { CreateAttributeBody, UpdateAttributeValidation, paginationType } from "./Request"
@@ -45,21 +45,31 @@ class ProductHandler {
     }
 
     async handleDeleteProduct(identity: TokenPayload, id: string) {
-        const store = await this.storeRepository.getSingleData({
-            where: { userId: identity.id }
-        })
-        if (store == null) throw new ErrorHandler(404, "Store hasn't been created")
+        const transaction = await this.productRepo.startTransaction()
+        try {
 
-        const result = await this.productRepo.deleteData({
-            where: {
-                id: id,
-                storeId: store.id
-            },
-            identity,
-        })
-        if (result == 0) throw new ErrorHandler(404, "Product not found")
+            const store = await this.storeRepository.getSingleData({
+                where: { userId: identity.id }
+            })
+            if (store == null) throw new ErrorHandler(404, "Store hasn't been created")
 
-        return true
+            const result = await this.productRepo.deleteData({
+                where: {
+                    id: id,
+                    storeId: store.id
+                },
+                transaction,
+                simmulateForceDelete: true,
+                identity,
+            })
+            if (result == 0) throw new ErrorHandler(404, "Product not found")
+
+            await transaction.commit()
+            return true
+        } catch (error) {
+            await transaction.rollback()
+            throw new TransactionErrorHandler(error)
+        }
     }
 
     async handleGetProductsList(identity: TokenPayload, pagination: paginationType) {

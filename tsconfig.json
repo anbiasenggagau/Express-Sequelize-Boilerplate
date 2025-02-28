@@ -104,7 +104,8 @@
   "include": [
     "./src/**/*.ts",
     "src/main/model/repository/.BaseRepository.ts",
-    "src/main/api/.BaseResponse.ts"
+    "src/main/api/.BaseResponse.ts",
+    "src/main/api/.BaseConstroller.ts"
   ],
   "exclude": [
     "node_modules"
