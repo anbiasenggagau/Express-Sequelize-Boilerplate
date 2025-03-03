@@ -21,7 +21,7 @@ export const updateAttributesValidation = [
         .isMobilePhone("any")
 ]
 
-export type CreateAttributesBody = {
+export type CreationAttributesBody = {
     name: string
     address: string
     phoneNumber: string

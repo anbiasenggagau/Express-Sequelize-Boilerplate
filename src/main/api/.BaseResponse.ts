@@ -47,7 +47,7 @@ class BaseResponse {
         }
     }
 
-    CreatedNewData<T>(response: express.Response, message: string, id: number | string) {
+    CreatedNewData(response: express.Response, message: string, id: number | string | Array<string | number>) {
         const finalResponse = {
             message,
             statusCode: 201,
@@ -56,7 +56,7 @@ class BaseResponse {
             }
         }
 
-        response.status(201).json(finalResponse)
+        return response.status(201).json(finalResponse)
     }
 
     NotFound(response: express.Response, message: string) {

@@ -21,7 +21,7 @@ export const updateAttributesValidation = [
         .isString(),
 ]
 
-export type CreateAttributesBody = {
+export type CreationAttributesBody = {
     email: string
     username: string
     password: string

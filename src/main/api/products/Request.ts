@@ -19,7 +19,7 @@ export const updateAttributeValidation = [
     body("currency")
         .optional()
         .isIn(["IDR", "USD"]),
-    query("id")
+    param("id")
         .exists()
 ]
 
@@ -42,7 +42,7 @@ export type paginationType = {
     pageSize: number
 }
 
-export type CreateAttributeBody = {
+export type CreationAttributesBody = {
     name: string
     price: number
     currency: string

@@ -2,25 +2,37 @@ import { TokenPayload } from "../../middleware/Authentication"
 import ErrorHandler, { TransactionErrorHandler } from "../../middleware/ErrorHandler"
 import ProductRepo from "../../model/repository/ProductRepo"
 import StoresRepo from "../../model/repository/StoreRepo"
-import { CreateAttributeBody, UpdateAttributeValidation, paginationType } from "./Request"
+import { CreationAttributesBody, UpdateAttributeValidation, paginationType } from "./Request"
 
 class ProductHandler {
     private readonly productRepo = ProductRepo
     private readonly storeRepository = StoresRepo
 
-    async handleCreateProduct(identity: TokenPayload, body: CreateAttributeBody) {
-        const store = await this.storeRepository.getSingleData({
-            where: { userId: identity.id }
-        })
-        if (store == null) throw new ErrorHandler(404, "Store hasn't been created")
+    async handleCreateProduct(identity: TokenPayload, body: CreationAttributesBody) {
+        const transaction = await this.productRepo.startTransaction()
+        try {
+            const store = await this.storeRepository.getSingleData({
+                where: { userId: identity.id }
+            })
+            if (store == null) throw new ErrorHandler(404, "Store hasn't been created")
 
-        return await this.productRepo.insertNewData(
-            {
-                ...body,
-                storeId: store.id,
-            },
-            { identity }
-        )
+            const result = await this.productRepo.insertNewData(
+                {
+                    ...body,
+                    storeId: store.id,
+                },
+                {
+                    identity,
+                    transaction,
+                }
+            )
+
+            await transaction.commit()
+            return result
+        } catch (error) {
+            await transaction.rollback()
+            throw new TransactionErrorHandler(error)
+        }
     }
 
     async handleUpdateProduct(identity: TokenPayload, body: UpdateAttributeValidation, id: string) {

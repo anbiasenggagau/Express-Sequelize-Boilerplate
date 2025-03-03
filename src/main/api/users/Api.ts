@@ -1,7 +1,7 @@
 import express from "express"
 import BaseController from "../.BaseController"
 import UserResponse from "./Response"
-import { CreateAttributesBody, UpdateAttributesBody, createAttributesValidation, updateAttributesValidation } from "./Request"
+import { CreationAttributesBody, UpdateAttributesBody, createAttributesValidation, updateAttributesValidation } from "./Request"
 import UserHandler from "./Handler"
 import { TokenPayload, authenticate } from "../../middleware/Authentication"
 
@@ -16,7 +16,7 @@ class UserController extends BaseController {
             try {
                 super.validateRequest(req)
                 const identity = super.getIdentity(req)
-                const body: CreateAttributesBody = req.body
+                const body: CreationAttributesBody = req.body
 
                 const data = await this.handler.handleCreateNewUser(identity, body)
                 return this.response.CreatedNewData(res, "Success", data.id)

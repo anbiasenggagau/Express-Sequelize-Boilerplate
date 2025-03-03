@@ -10,7 +10,7 @@ export const updateAttributeValidation = [
         .isString()
 ]
 
-export type CreateAttributeBody = {
+export type CreationAttributesBody = {
     name: string
 }
 

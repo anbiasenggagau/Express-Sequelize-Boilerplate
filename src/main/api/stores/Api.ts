@@ -1,7 +1,7 @@
 import express from "express"
 import BaseController from "../.BaseController"
 import StoreHandler from "./Handler"
-import { CreateAttributeBody, UpdateAttributeValidation, createAttributesValidation, updateAttributeValidation } from "./Request"
+import { CreationAttributesBody, UpdateAttributeValidation, createAttributesValidation, updateAttributeValidation } from "./Request"
 import StoreResponse from "./Response"
 
 const app = express.Router()
@@ -14,7 +14,7 @@ class StoreController extends BaseController {
         app.post("/stores", createAttributesValidation, async (req: express.Request, res: express.Response, next: express.NextFunction) => {
             try {
                 super.validateRequest(req)
-                const body: CreateAttributeBody = req.body
+                const body: CreationAttributesBody = req.body
                 const identity = super.getIdentity(req)
 
                 const data = await this.handler.handleCreateStore(identity, body)

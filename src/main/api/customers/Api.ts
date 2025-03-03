@@ -1,5 +1,5 @@
 import express from "express"
-import { CreateAttributesBody, UpdateAttributesBody, createAttributesValidation, updateAttributesValidation } from "./Request"
+import { CreationAttributesBody, UpdateAttributesBody, createAttributesValidation, updateAttributesValidation } from "./Request"
 import CustomerHandler from "./Handler"
 import BaseController from "../.BaseController"
 import CustomerResponse from "./Response"
@@ -14,7 +14,7 @@ class CustomerController extends BaseController {
         app.post("/customers", createAttributesValidation, async (req: express.Request, res: express.Response, next: express.NextFunction) => {
             try {
                 super.validateRequest(req)
-                const body: CreateAttributesBody = req.body
+                const body: CreationAttributesBody = req.body
                 const identity = super.getIdentity(req)
 
                 const data = await this.handler.handleCreateCustomer(identity, body)

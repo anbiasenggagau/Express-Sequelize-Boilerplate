@@ -28,7 +28,7 @@ type QueryOption<T> = {
     offset?: number
     order?: Order
     lock?: boolean
-    transaction?: Transaction
+    transaction?: Transaction | null
     paranoid?: boolean
 }
 
@@ -37,7 +37,7 @@ type PaginationQuery<T> = {
     attributes?: FindAttributeOptions
     order?: Order
     lock?: boolean
-    transaction?: Transaction
+    transaction?: Transaction | null
     paranoid?: boolean
     includeAllAttributes?: boolean
 }
@@ -46,7 +46,7 @@ type SingleQueryOption<T> = {
     where: WhereOptions<T>
     order?: Order
     lock?: boolean
-    transaction?: Transaction
+    transaction?: Transaction | null
 }
 
 type CountOption<T> = {
@@ -55,30 +55,30 @@ type CountOption<T> = {
 }
 
 type CreateOption = {
-    transaction?: Transaction
+    transaction?: Transaction | null
     hooks?: boolean
 } & LoggingAttribute
 
 type CreateBulkOption<T> = {
-    updateOnDuplicate?: (keyof T)[]
-    transaction?: Transaction
+    updateOnDuplicate?: (keyof T)[] | boolean
+    transaction?: Transaction | null
     conflictAttributes?: (keyof T)[]
     hooks?: boolean
 } & LoggingAttribute
 
 type UpdateOption<T> = {
     where: WhereOptions<T>
-    transaction?: Transaction
+    transaction?: Transaction | null
 } & LoggingAttribute
 
 type DeleteOption<T> = ({
     where: WhereOptions<T>
-    transaction?: Transaction
+    transaction?: Transaction | null
     force?: false
     simmulateForceDelete?: false
 } | {
     where: WhereOptions<T>
-    transaction?: Transaction
+    transaction?: Transaction | null
     force: true
     /**
      * Simulate force delete so it can trigger "ON DELETE" event
@@ -100,7 +100,7 @@ type DeleteOption<T> = ({
 
 type RestoreOption<T> = {
     where: WhereOptions<T>
-    transaction?: Transaction
+    transaction?: Transaction | null
 } & LoggingAttribute
 
 interface ModelInstance<T> {
@@ -194,6 +194,9 @@ abstract class BaseRepository<TModelInstance extends Model, TModelAttributes, TC
             conflictAttributes: [this.model.primaryKeyAttribute]
         }
         CreateOption = { ...defaultOptions, ...CreateOption }
+        if (CreateOption.updateOnDuplicate === true) {
+            CreateOption.updateOnDuplicate = Object.keys(this.getAllAttributes()) as (keyof TModelAttributes)[]
+        }
 
         if ((CreationAttributes[0] as any)["createdBy"]) {
             CreateOption.identity = { username: (CreationAttributes[0] as any)["createdBy"] }
@@ -288,11 +291,12 @@ abstract class BaseRepository<TModelInstance extends Model, TModelAttributes, TC
             })
             await savePoint.rollback()
 
+            const updateAttributes = {
+                deletedBy: fieldExist ? DeleteOption.identity?.username : undefined,
+                deletedAt: new Date(),
+            }
             const [result, _] = await this.model.update(
-                {
-                    deletedBy: fieldExist ? DeleteOption.identity?.username : "System",
-                    deletedAt: new Date(),
-                },
+                { ...updateAttributes },
                 {
                     ...DeleteOption,
                     force: false,
@@ -303,11 +307,12 @@ abstract class BaseRepository<TModelInstance extends Model, TModelAttributes, TC
         }
 
         if (this.model.options.paranoid === true && !DeleteOption.force) {
+            const updateAttributes = {
+                deletedBy: fieldExist ? DeleteOption.identity?.username : undefined,
+                deletedAt: new Date(),
+            }
             const [result, _] = await this.model.update(
-                {
-                    deletedBy: fieldExist ? DeleteOption.identity?.username : "System",
-                    deletedAt: new Date(),
-                },
+                { ...updateAttributes },
                 {
                     ...DeleteOption,
                     paranoid: false,

@@ -1,7 +1,7 @@
 import express from "express"
 import BaseController from "../.BaseController"
 import ProductHandler from "./Handler"
-import { CreateAttributeBody, UpdateAttributeValidation, createAttributesValidation, deleteValidation, paginationType, paginationValidation, updateAttributeValidation } from "./Request"
+import { CreationAttributesBody, UpdateAttributeValidation, createAttributesValidation, deleteValidation, paginationType, paginationValidation, updateAttributeValidation } from "./Request"
 import ProductResponse from "./Response"
 
 const app = express.Router()
@@ -14,7 +14,7 @@ class ProductController extends BaseController {
         app.post("/products", createAttributesValidation, async (req: express.Request, res: express.Response, next: express.NextFunction) => {
             try {
                 super.validateRequest(req)
-                const body: CreateAttributeBody = req.body
+                const body: CreationAttributesBody = req.body
                 const identity = super.getIdentity(req)
 
                 const data = await this.handler.handleCreateProduct(identity, body)
@@ -39,11 +39,11 @@ class ProductController extends BaseController {
             }
         })
 
-        app.put("/products", updateAttributeValidation, async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+        app.put("/products/:id", updateAttributeValidation, async (req: express.Request, res: express.Response, next: express.NextFunction) => {
             try {
                 super.validateRequest(req)
                 const body: UpdateAttributeValidation = req.body
-                const id: string = req.query.id as string
+                const id: string = req.params.id
                 const identity = super.getIdentity(req)
 
                 await this.handler.handleUpdateProduct(identity, body, id)

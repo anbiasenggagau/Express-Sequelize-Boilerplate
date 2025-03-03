@@ -1,18 +1,19 @@
 import { TokenPayload } from "../../middleware/Authentication"
 import ErrorHandler from "../../middleware/ErrorHandler"
 import StoreRepo from "../../model/repository/StoreRepo"
-import { CreateAttributeBody, UpdateAttributeValidation } from "./Request"
+import { CreationAttributesBody, UpdateAttributeValidation } from "./Request"
 
 class StoreHandler {
     private readonly storeRepo = StoreRepo
 
-    async handleCreateStore(identity: TokenPayload, body: CreateAttributeBody) {
+    async handleCreateStore(identity: TokenPayload, body: CreationAttributesBody) {
         const result = await this.storeRepo.findOrCreate(
             { userId: identity.id },
             {
                 ...body,
                 userId: identity.id,
-            }
+            },
+            { identity }
         )
 
         return result

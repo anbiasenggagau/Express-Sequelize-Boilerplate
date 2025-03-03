@@ -1,5 +1,5 @@
 import UserRepo from "../../model/repository/UserRepo";
-import { CreateAttributesBody, UpdateAttributesBody } from "./Request";
+import { CreationAttributesBody, UpdateAttributesBody } from "./Request";
 import configData from "../../config/GeneralConfig"
 import bcrypt from "bcryptjs"
 import { TokenPayload } from "../../middleware/Authentication";
@@ -9,7 +9,7 @@ import SessionUtility from "../../utility/SessionUtiliity";
 class UserHandler {
     private readonly userRepo = UserRepo
 
-    async handleCreateNewUser(identity: TokenPayload, body: CreateAttributesBody) {
+    async handleCreateNewUser(identity: TokenPayload, body: CreationAttributesBody) {
         const transaction = await this.userRepo.startTransaction()
         try {
             const result = await this.userRepo.insertNewData(
