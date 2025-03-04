@@ -14,7 +14,7 @@ class ProductHandler {
             const store = await this.storeRepository.getSingleData({
                 where: { userId: identity.id }
             })
-            if (store == null) throw new ErrorHandler(404, "Store hasn't been created")
+            if (store == null) throw new ErrorHandler(400, "Store hasn't been created")
 
             const result = await this.productRepo.insertNewData(
                 {
@@ -39,7 +39,7 @@ class ProductHandler {
         const store = await this.storeRepository.getSingleData({
             where: { userId: identity.id }
         })
-        if (store == null) throw new ErrorHandler(404, "Store hasn't been created")
+        if (store == null) throw new ErrorHandler(400, "Store hasn't been created")
 
         const result = await this.productRepo.updateData(
             { ...body },
@@ -63,7 +63,7 @@ class ProductHandler {
             const store = await this.storeRepository.getSingleData({
                 where: { userId: identity.id }
             })
-            if (store == null) throw new ErrorHandler(404, "Store hasn't been created")
+            if (store == null) throw new ErrorHandler(400, "Store hasn't been created")
 
             const result = await this.productRepo.deleteData({
                 where: {

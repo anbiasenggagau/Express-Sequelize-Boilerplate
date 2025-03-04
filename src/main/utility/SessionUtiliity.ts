@@ -1,121 +1,84 @@
 import jwt from "jsonwebtoken"
 import configData from "../config/GeneralConfig"
-import { RefreshToken, TokenPayload } from "../middleware/Authentication"
+import { TokenPayload } from "../middleware/Authentication"
 import RedisUtility from "./RedisUtility"
 import { v7 } from "uuid"
 import ErrorHandler from "../middleware/ErrorHandler"
 
-type RefreshTokenSession = {
-    refreshId: string
-    exp: number
-}
-
 class SessionUtility {
-    static async insertRefreshLoginToken(refreshToken: string, accessToken: string) {
-        const refreshTokenObject = jwt.verify(refreshToken, configData.JWT_SECRET)
-        const accessTokenObject = jwt.verify(accessToken, configData.JWT_SECRET)
+    static generateAccessToken(tokenPayload: Omit<TokenPayload, "exp" | "iat">) {
+        const accessToken = jwt.sign(tokenPayload, configData.JWT_SECRET, { expiresIn: configData.JWT_EXPIRATION })
+        return accessToken
+    }
 
+    // ==================================================================================
+    // Cache key will follow this pattern if we are using Refresh Token Mechanism
+    // login=>identity.id=>session_number=>refresh_id
+    // blocked=>refresh_id
+
+    static async insertRefreshLoginToken(refreshToken: string, tokenPayload: Omit<TokenPayload, "exp" | "iat">) {
         let tokenNumber: number[] = []
-        const identity = refreshTokenObject as RefreshToken
 
         // Only allow certain amount of sessions
-        const keys = await RedisUtility.GetKeysFromPattern("login" + identity.id + "=>*")
+        const keys = await RedisUtility.GetKeysFromPattern("login=>" + tokenPayload.id + "=>*")
         if (keys) {
-            tokenNumber = keys.map(value => parseInt(value.split("=>")[1]))
+            tokenNumber = keys.map(value => parseInt(value.split("=>")[2]))
 
+            // Terminate oldest session
             if (keys.length >= configData.NUMBER_OF_ALLOWED_SESSIONS) {
                 const min = Math.min(...tokenNumber)
-                const key = keys.find(value => value.includes("login" + identity.id + "=>" + min))!
-                const lastTokenSession = await RedisUtility.Get(key) as string
-                const lastTokenSessionObject = JSON.parse(lastTokenSession) as RefreshTokenSession
+                const lastTokenSessionKey = keys.find(value => value.includes("login=>" + tokenPayload.id + "=>" + min))!
 
-                RedisUtility.Delete(key)
-                RedisUtility.Delete("valid" + lastTokenSessionObject.refreshId)
+                RedisUtility.Delete(lastTokenSessionKey)
             }
 
             let max = 0
             if (tokenNumber.length > 0) max = Math.max(...tokenNumber)
 
-            RedisUtility.SetExpiredAt({
-                key: "login" + identity.id + "=>" + (max + 1) + "=>" + (identity.refreshId),
-                value: JSON.stringify(
-                    {
-                        refreshId: identity.refreshId,
-                        exp: identity.exp
-                    } as RefreshTokenSession
-                ),
-                expiredAt: identity.exp
-            })
-
-            RedisUtility.SetExpiredAt({
-                key: "valid" + identity.refreshId,
-                value: JSON.stringify(accessTokenObject),
-                expiredAt: identity.exp
+            RedisUtility.SetEx({
+                key: "login=>" + tokenPayload.id + "=>" + (max + 1) + "=>" + (refreshToken),
+                value: JSON.stringify(tokenPayload),
+                ttl: configData.JWT_REFRESH_EXPIRATION
             })
         }
     }
 
-    static async renewAccessToken(refreshTokenObject: RefreshToken) {
-        const newRefreshTokenObject = {
-            id: refreshTokenObject.id,
-            username: refreshTokenObject.username,
-            refresh: refreshTokenObject.refresh,
-            refreshId: v7(),
+    static async renewAccessToken(refreshToken: string) {
+        // Generate new access token and rolling the given refresh token
+        const keys = await RedisUtility.GetKeysFromPattern("login=>*" + refreshToken)
+        if (keys && keys.length > 0) {
+            const key = keys[0]
+            const currentSession = JSON.parse(await RedisUtility.Get(key) as string)
+            const newAccessToken = jwt.sign(currentSession, configData.JWT_SECRET, { expiresIn: configData.JWT_EXPIRATION })
+            const newRefreshToken = v7()
+            const newKeySession = key.split("=>")
+            newKeySession[3] = newRefreshToken
+            RedisUtility.SetEx({
+                key: newKeySession.join("=>"),
+                value: JSON.stringify(currentSession),
+                ttl: configData.JWT_REFRESH_EXPIRATION,
+            })
+            const remainingTTL = (await RedisUtility.TTL(key))!
+            RedisUtility.Delete(key)
+            RedisUtility.SetEx({
+                key: "blocked=>" + refreshToken,
+                value: currentSession.id,
+                ttl: remainingTTL
+            })
+
+            return { accessToken: newAccessToken, refreshToken: newRefreshToken }
         }
-
-        const newAccessTokenObject = {
-            id: refreshTokenObject.id,
-            username: refreshTokenObject.username,
-        }
-
-        const accessToken = jwt.sign(newAccessTokenObject, configData.JWT_SECRET, { expiresIn: configData.JWT_EXPIRATION })
-        const refreshToken = jwt.sign(newRefreshTokenObject, configData.JWT_SECRET, { expiresIn: configData.JWT_REFRESH_EXPIRATION })
-
-        const newRefreshTokenObjectWithExp = jwt.verify(refreshToken, configData.JWT_SECRET) as RefreshToken
-
-        const currentSessionKey = (await RedisUtility.GetKeysFromPattern("login" + refreshTokenObject.id + "=>*=>" + refreshTokenObject.refreshId) as string[])[0]
-        const sessionNumber = currentSessionKey.split("=>")[1]
-
-        RedisUtility.SetExpiredAt({
-            key: "blocked" + refreshTokenObject.refreshId,
-            value: "X",
-            expiredAt: refreshTokenObject.exp,
-        })
-        RedisUtility.SetExpiredAt({
-            key: "valid" + newRefreshTokenObject.refreshId,
-            value: JSON.stringify(newAccessTokenObject),
-            expiredAt: newRefreshTokenObjectWithExp.exp
-        })
-        RedisUtility.SetExpiredAt({
-            key: "login" + newRefreshTokenObjectWithExp.id + "=>" + sessionNumber + "=>" + newRefreshTokenObjectWithExp.refreshId,
-            value: JSON.stringify(
-                {
-                    refreshId: newRefreshTokenObjectWithExp.refreshId,
-                    exp: newRefreshTokenObjectWithExp.exp
-                } as RefreshTokenSession
-            ),
-            expiredAt: newRefreshTokenObjectWithExp.exp
-        })
-        RedisUtility.Delete("valid" + refreshTokenObject.refreshId)
-        RedisUtility.Delete(currentSessionKey)
-
-        return { accessToken, refreshToken }
+        // If valid refresh token is not found, then it will return Status Code 401
+        throw new ErrorHandler(401)
     }
 
-    static async checkBeforeRenewAccessToken(refreshTokenObject: RefreshToken): Promise<{ valid: boolean, message: string }> {
+    static async checkBlockedRefreshToken(refreshToken: string): Promise<{ valid: boolean, message: string }> {
+        // Check if user is using the blocked refresh token
+        // If so, then it is guarentee that refresh token is hijacked
         try {
-            let check = await RedisUtility.Get("valid" + refreshTokenObject.refreshId)
-            if (!check) {
-                check = await RedisUtility.Get("blocked" + refreshTokenObject.refreshId)
-                if (!check) return { valid: false, message: "jwt expired" }
-
-                this.revokeAllSession(refreshTokenObject)
-                return { valid: false, message: "Your session token has been hijacked by someone else" }
-            }
-
-            const sessionObject = JSON.parse(check) as TokenPayload
-            if (sessionObject.exp > (new Date()).getTime()) {
-                this.revokeAllSession(refreshTokenObject)
+            const value = await RedisUtility.Get("blocked=>" + refreshToken)
+            if (value) {
+                this.revokeAllSession(value)
                 return { valid: false, message: "Your session token has been hijacked by someone else" }
             }
             return { valid: true, message: "" }
@@ -124,78 +87,89 @@ class SessionUtility {
         }
     }
 
-    private static async revokeAllSession(refreshTokenObject: RefreshToken) {
-        try {
-            const allSessionKey = await RedisUtility.GetKeysFromPattern("login" + refreshTokenObject.id + "*") as string[]
-            for (const sessionKey of allSessionKey) {
-                const session = await RedisUtility.Get(sessionKey) as string
-                const sessionObject = JSON.parse(session) as RefreshTokenSession
-
-                RedisUtility.Delete(sessionKey)
-                RedisUtility.Delete("valid" + sessionObject.refreshId)
-            }
-        } catch (error) {
-            throw new ErrorHandler(500)
-        }
+    static async revokeAllSession(tokenObject: TokenPayload | string) {
+        if (typeof tokenObject == "string")
+            RedisUtility.DeleteKeysFromPattern("login=>" + tokenObject + "=>*")
+        else
+            RedisUtility.DeleteKeysFromPattern("login=>" + tokenObject.id + "=>*")
     }
 
-    static async revokeSession(refreshTokenObject: RefreshToken) {
-        const currentSessionKey = (await RedisUtility.GetKeysFromPattern("login" + refreshTokenObject.id + "=>*=>" + refreshTokenObject.refreshId) as string[])[0]
+    static async revokeSession(refreshToken: string) {
+        const currentSessionKey = (await RedisUtility.GetKeysFromPattern("login=>*" + refreshToken) as string[])[0]
+        const remainingTTL = (await RedisUtility.TTL(currentSessionKey))!
         RedisUtility.Delete(currentSessionKey)
-        RedisUtility.Delete("valid" + refreshTokenObject.refreshId)
-    }
-
-    static async insertLoginToken(token: string) {
-        jwt.verify(token, configData.JWT_SECRET, async (err, user) => {
-            let tokenNumber: number[] = []
-            const identity = user as TokenPayload
-
-            // Only allow certain sessions
-            const keys = await RedisUtility.GetKeysFromPattern("login" + identity.id + "=>*")
-            if (keys) {
-                tokenNumber = keys.map(value => parseInt(value.split("=>")[1]))
-
-                if (keys.length >= configData.NUMBER_OF_ALLOWED_SESSIONS) {
-                    const min = Math.min(...tokenNumber)
-                    const key = keys.find(value => value.includes("login" + identity.id + "=>" + min))!
-                    const loginToken = await RedisUtility.Get(key)
-
-                    if (!loginToken) return null
-                    const loginTokenObject = JSON.parse(loginToken) as TokenPayload
-                    this.insertBlockedToken(loginTokenObject)
-                }
-
-                let max = 0
-                if (tokenNumber.length > 0) max = Math.max(...tokenNumber)
-
-                RedisUtility.SetExpiredAt({
-                    key: "login" + identity.id + "=>" + (max + 1) + "=>" + identity.iat,
-                    value: JSON.stringify(identity),
-                    expiredAt: identity.exp
-                })
-            }
+        RedisUtility.SetEx({
+            key: "blocked=>" + refreshToken,
+            value: currentSessionKey.split("=>")[1],
+            ttl: remainingTTL
         })
     }
 
-    static async insertBlockedToken(identity: TokenPayload) {
-        const keys = await RedisUtility.GetKeysFromPattern("login" + identity.id + "=>*=>" + identity.iat)
-        if (keys) RedisUtility.Delete(keys[0])
+    // ==================================================================================
+    // Cache key will follow this pattern
+    // login=>identity.id=>session_number=>identity.iat
+    // blocked=>identity.id=>identity.iat
 
+    static async insertLoginToken(tokenString: string) {
+        const tokenObject = jwt.verify(tokenString, configData.JWT_SECRET) as TokenPayload
+        let tokenNumber: number[] = []
+
+        // Only allow certain sessions
+        const keys = await RedisUtility.GetKeysFromPattern("login=>" + tokenObject.id + "=>*")
+        if (keys) {
+            tokenNumber = keys.map(value => parseInt(value.split("=>")[2]))
+
+            if (keys.length >= configData.NUMBER_OF_ALLOWED_SESSIONS) {
+                const min = Math.min(...tokenNumber)
+                const lastTokenSessionKey = keys.find(value => value.includes("login=>" + tokenObject.id + "=>" + min))!
+
+                // Insert last session as blocked token
+                const lastSessionTokenObject = JSON.parse(await RedisUtility.Get(lastTokenSessionKey) as string) as TokenPayload
+                RedisUtility.Delete(lastTokenSessionKey)
+                RedisUtility.SetExpiredAt(
+                    {
+                        key: "blocked=>" + lastSessionTokenObject.id + "=>" + lastSessionTokenObject.iat.toString(),
+                        value: JSON.stringify(lastSessionTokenObject),
+                        expiredAt: lastSessionTokenObject.exp
+                    }
+                )
+            }
+
+            let max = 0
+            if (tokenNumber.length > 0) max = Math.max(...tokenNumber)
+
+            RedisUtility.SetExpiredAt({
+                key: "login=>" + tokenObject.id + "=>" + (max + 1) + "=>" + tokenObject.iat.toString(),
+                value: JSON.stringify(tokenObject),
+                expiredAt: tokenObject.exp
+            })
+        }
+    }
+
+    static async blockAllToken(tokenObject: TokenPayload) {
+        RedisUtility.DeleteKeysFromPattern("login=>" + tokenObject.id + "=>*")
         RedisUtility.SetExpiredAt(
             {
-                key: identity.id + identity.iat.toString(),
-                value: JSON.stringify(identity),
-                expiredAt: identity.exp
+                key: "blocked=>" + tokenObject.id + "=>" + tokenObject.iat.toString(),
+                value: JSON.stringify(tokenObject),
+                expiredAt: tokenObject.exp
             }
         )
     }
 
-    static async removeBlockedToken(identity: TokenPayload) {
-        RedisUtility.Delete(identity.id + identity.iat.toString())
+    static async blockToken(tokenObject: TokenPayload) {
+        RedisUtility.DeleteKeysFromPattern("login=>" + tokenObject.id + "=>*" + tokenObject.iat.toString())
+        RedisUtility.SetExpiredAt(
+            {
+                key: "blocked=>" + tokenObject.id + "=>" + tokenObject.iat.toString(),
+                value: JSON.stringify(tokenObject),
+                expiredAt: tokenObject.exp
+            }
+        )
     }
 
-    static async getBlockedToken(identity: TokenPayload) {
-        return await RedisUtility.Get(identity.id + identity.iat.toString())
+    static async getBlockedToken(tokenObject: TokenPayload) {
+        return await RedisUtility.Get("blocked=>" + tokenObject.id + "=>" + tokenObject.iat.toString())
     }
 }
 

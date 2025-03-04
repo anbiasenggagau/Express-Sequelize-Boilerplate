@@ -1,9 +1,10 @@
 import express from "express"
 import BaseController from "../.BaseController"
 import AuthResponse from "./Response"
-import { LoginAttributeBody, loginAttributeValidation, } from "./Request"
+import { LoginAttributeBody, loginAttributeValidation, refreshTokenValidation, } from "./Request"
 import AuthHandler from "./Handler"
-import { RefreshToken, TokenPayload, authenticate, refresh } from "../../middleware/Authentication"
+import { logoutAuthenticate } from "../../middleware/Authentication"
+import GeneralConfig from "../../config/GeneralConfig"
 
 const app = express.Router()
 
@@ -24,22 +25,23 @@ class CustomersController extends BaseController {
             }
         })
 
-        app.post("/auth/logout", authenticate, async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+        app.post("/auth/logout", logoutAuthenticate, async (req: express.Request, res: express.Response, next: express.NextFunction) => {
             try {
-                const identity: TokenPayload | RefreshToken = req.user
-
-                await this.handler.handleLogout(identity)
+                const refreshToken = req.body.refreshToken
+                if (GeneralConfig.REFRESH_TOKEN)
+                    await this.handler.handleLogout(refreshToken)
+                else
+                    await this.handler.handleLogout(super.getIdentity(req))
                 return this.response.OK(res, "Success")
             } catch (error) {
                 next(error)
             }
         })
 
-        app.post("/auth/refresh", refresh, async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+        app.post("/auth/refresh", refreshTokenValidation, async (req: express.Request, res: express.Response, next: express.NextFunction) => {
             try {
-                const identity = req.user as RefreshToken
-
-                const data = await this.handler.handleRefreshToken(identity)
+                const refreshToken = req.body.refreshToken
+                const data = await this.handler.handleRefreshToken(refreshToken)
                 return this.response.OK(res, "Success", data)
             } catch (error) {
                 next(error)

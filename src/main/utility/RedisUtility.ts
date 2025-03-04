@@ -28,13 +28,21 @@ class RedisUtility {
         return null
     }
 
-    async DeleteKeysFromPattern(pattern: string) {
+    async DeleteKeysFromPattern(pattern: string): Promise<number | null> {
         if (this.client != null) {
-            const keys = await this.client.keys(pattern)
+            let cursor = 0
             let count = 0
-            for (const key of keys) {
-                count += await this.client.del(key)
-            }
+
+            do {
+                const result = await this.client.scan(cursor, { MATCH: pattern, COUNT: 100 })
+                cursor = result.cursor
+                const keys = result.keys
+
+                if (keys.length > 0) {
+                    count += await this.client.del(keys)
+                }
+            } while (cursor !== 0)
+
             return count
         }
         return null
@@ -62,6 +70,10 @@ class RedisUtility {
     async Get(key: string) {
         if (this.client != null) return await this.client.get(key)
         return null
+    }
+
+    async TTL(key: string) {
+        if (this.client != null) return await this.client.TTL(key)
     }
 }
 

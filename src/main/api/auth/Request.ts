@@ -1,4 +1,4 @@
-import { body, oneOf } from "express-validator"
+import { body, checkExact, oneOf } from "express-validator"
 
 export const loginAttributeValidation = [
     oneOf([
@@ -9,6 +9,14 @@ export const loginAttributeValidation = [
     ]),
     body("password")
         .isString(),
+]
+
+export const refreshTokenValidation = [
+    checkExact([
+        body("refreshToken")
+            .optional()
+            .isUUID()
+    ])
 ]
 
 export interface LoginAttributeBody {

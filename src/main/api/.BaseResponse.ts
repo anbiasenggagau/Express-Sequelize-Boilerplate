@@ -15,14 +15,14 @@ class BaseResponse {
     OK<T>(response: express.Response, message: string, paginationOrData?: PaginationType | T | DataWithCount<T>, dataOrUndefined?: DataWithCount<T>): express.Response {
         if (paginationOrData === undefined && dataOrUndefined === undefined) {
             return response.status(200).json({
+                statusCode: 200,
                 message,
-                statusCode: 200
             })
         }
         else if (paginationOrData && (!paginationOrData.hasOwnProperty("page") && !paginationOrData.hasOwnProperty("pageSize"))) {
             return response.status(200).json({
-                message,
                 statusCode: 200,
+                message,
                 data: paginationOrData
             })
         }
@@ -33,14 +33,14 @@ class BaseResponse {
 
             if (pagination.page > paginationResult.totalPages) {
                 return response.status(404).json({
+                    statusCode: 404,
                     message: "Not Data Found",
-                    statusCode: 404
                 })
             }
 
             return response.status(200).json({
-                message,
                 statusCode: 200,
+                message,
                 ...paginationResult,
                 data: dataWithCount.data
             })
@@ -49,8 +49,8 @@ class BaseResponse {
 
     CreatedNewData(response: express.Response, message: string, id: number | string | Array<string | number>) {
         const finalResponse = {
-            message,
             statusCode: 201,
+            message,
             data: {
                 id
             }
@@ -61,17 +61,18 @@ class BaseResponse {
 
     NotFound(response: express.Response, message: string) {
         const finalResponse = {
-            message,
             statusCode: 404,
+            message,
         }
 
         return response.status(404).json(finalResponse)
     }
 
-    BadRequest(response: express.Response, message: string) {
+    BadRequest(response: express.Response, message: string, userMessage: boolean = true) {
         const finalResponse = {
-            message,
             statusCode: 400,
+            message,
+            userMessage,
         }
 
         return response.status(400).json(finalResponse)
@@ -79,8 +80,9 @@ class BaseResponse {
 
     ErrorValidation(response: express.Response, data: ValidationError[]) {
         const finalResponse = {
-            message: "Error Validation",
             statusCode: 400,
+            message: "Error Validation",
+            userMessage: false,
             data
         }
 
@@ -90,8 +92,8 @@ class BaseResponse {
     Unauthorized(response: express.Response, message?: string) {
         if (!message) return response.sendStatus(401)
         const finalResponse = {
-            message,
             statusCode: 401,
+            message,
         }
         return response.status(401).json(finalResponse)
     }
@@ -99,8 +101,8 @@ class BaseResponse {
     Forbidden(response: express.Response, message?: string) {
         if (message)
             return response.status(403).json({
+                statusCode: 403,
                 message,
-                statusCode: 403
             })
 
         return response.sendStatus(403)
@@ -108,8 +110,8 @@ class BaseResponse {
 
     InternalServerError(response: express.Response) {
         return response.status(500).json({
+            statusCode: 500,
             message: "Internal error occured, please contact administrator",
-            statusCode: 500
         })
     }
 
@@ -125,13 +127,13 @@ class BaseResponse {
         })
     }
 
-    handleErrorStatusCode(response: express.Response, statusCode: StatusCode, message: string, errorValidationList?: ValidationError[]) {
-        if (statusCode == 400 && errorValidationList) this.ErrorValidation(response, errorValidationList)
-        else if (statusCode == 400 && !errorValidationList) this.BadRequest(response, message)
-        else if (statusCode == 404) this.NotFound(response, message)
-        else if (statusCode == 401) this.Unauthorized(response, message)
-        else if (statusCode == 403) this.Forbidden(response, message)
-        else this.SendOnlyStatusCode(response, statusCode)
+    handleErrorStatusCode(response: express.Response, statusCode: StatusCode, message: string, errorValidationList?: ValidationError[], userMessage: boolean = true) {
+        if (statusCode == 400 && errorValidationList) return this.ErrorValidation(response, errorValidationList)
+        else if (statusCode == 400 && !errorValidationList) return this.BadRequest(response, message, userMessage)
+        else if (statusCode == 404) return this.NotFound(response, message)
+        else if (statusCode == 401) return this.Unauthorized(response, message)
+        else if (statusCode == 403) return this.Forbidden(response, message)
+        else return this.SendOnlyStatusCode(response, statusCode)
     }
 
     protected getLastPage(dataTotal: number, pageSize: number): number {

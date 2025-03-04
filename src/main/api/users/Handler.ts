@@ -54,7 +54,10 @@ class UserHandler {
         })
 
         if (result == 0) throw new ErrorHandler(404, "User not found or already deleted")
-        await SessionUtility.insertBlockedToken(identity)
+        if (configData.REFRESH_TOKEN)
+            await SessionUtility.revokeAllSession(identity.id)
+        else
+            await SessionUtility.blockAllToken(identity)
 
         return true
     }

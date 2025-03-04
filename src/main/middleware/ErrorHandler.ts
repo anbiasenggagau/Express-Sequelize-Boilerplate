@@ -10,7 +10,7 @@ const response = new BaseResponse()
 export function handleError(error: unknown, req: expres.Request, res: expres.Response, next: expres.NextFunction) {
     if (error instanceof ErrorHandler) {  // Handle error from manually thrown error
         Logging.warn(error)
-        return response.handleErrorStatusCode(res, error.statusCode, error.message, error.errorValidationList)
+        return response.handleErrorStatusCode(res, error.statusCode, error.message, error.errorValidationList, error.userMessage)
     }
     else if (error instanceof ValidationErrorSequelize) {   // Handle error from sequelize validation
         Logging.warn(error)
@@ -42,14 +42,26 @@ export function handleError(error: unknown, req: expres.Request, res: expres.Res
 class ErrorHandler extends Error {
     statusCode: StatusCode
     message: string
-    errorValidationList?: ValidationError[] = []
+    errorValidationList?: ValidationError[]
+    userMessage: boolean
 
     // errorValidationList only apply for validating Body Request using express-validator
-    constructor(statusCode: StatusCode, message?: string, errorValidationList?: ValidationError[]) {
+    constructor(statusCode: StatusCode, message?: string, userMessage?: boolean)
+    constructor(statusCode: StatusCode, message?: string, errorValidationList?: ValidationError[])
+    constructor(statusCode: StatusCode, message?: string, errorValidationListOrUserMessage?: ValidationError[] | boolean) {
         super()
         this.message = message ?? ""
         this.statusCode = statusCode
-        this.errorValidationList = errorValidationList
+        this.userMessage = true
+        if (errorValidationListOrUserMessage != undefined) {
+            if (Array.isArray(errorValidationListOrUserMessage)) {
+                this.errorValidationList = errorValidationListOrUserMessage
+                this.userMessage = false
+            }
+            else if (typeof errorValidationListOrUserMessage == "boolean") {
+                this.userMessage = errorValidationListOrUserMessage
+            }
+        }
     }
 }
 
