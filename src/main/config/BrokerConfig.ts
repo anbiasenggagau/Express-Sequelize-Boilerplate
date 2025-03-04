@@ -49,7 +49,7 @@ export async function initConsumer(queueName: string, handler: (data: ConsumeMes
             await channel.assertQueue(queueName, options?.queue)
             channel.consume(queueName, handler as (data: ConsumeMessage | null) => void, options?.consumer)
             Logging.info(`Listening to ${queueName}`)
-            return
+            return channel
         }
 
         Logging.warn(`AMQP Connection not ready yet. Trying to reinitiate consumer queue ${queueName} in 5 seconds`)
