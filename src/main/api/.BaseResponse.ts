@@ -10,9 +10,9 @@ type DataWithCount<T> = {
 
 class BaseResponse {
     OK(response: express.Response, message: string): express.Response;
-    OK<T>(response: express.Response, message: string, data: T): express.Response;
+    OK<T>(response: express.Response, message: string, data: Exclude<T, PaginationType>): express.Response;
     OK<T>(response: express.Response, message: string, pagination: PaginationType, data: DataWithCount<T>): express.Response;
-    OK<T>(response: express.Response, message: string, paginationOrData?: PaginationType | T | DataWithCount<T>, dataOrUndefined?: DataWithCount<T>): express.Response {
+    OK<T>(response: express.Response, message: string, paginationOrData?: PaginationType | T, dataOrUndefined?: DataWithCount<T>): express.Response {
         if (paginationOrData === undefined && dataOrUndefined === undefined) {
             return response.status(200).json({
                 statusCode: 200,

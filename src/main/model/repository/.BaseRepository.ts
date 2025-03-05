@@ -74,8 +74,8 @@ type UpdateOption<T> = {
 type DeleteOption<T> = ({
     where: WhereOptions<T>
     transaction?: Transaction | null
-    force?: false
-    simmulateForceDelete?: false
+    force?: boolean
+    simmulateForceDelete?: boolean
 } | {
     where: WhereOptions<T>
     transaction?: Transaction | null
