@@ -62,7 +62,7 @@ export const mainDb = new Sequelize({
             if (options.logHistory === true || options.logHistory === undefined) {
                 const modelInstance = instances[0].constructor as any
                 const modelName = modelInstance.name
-                const dataBeforeMap = ArrayUtility.transformIntoHashMap(options.dataBefore, "id")
+                const dataBeforeMap = options.dataBefore ? ArrayUtility.transformIntoHashMap(options.dataBefore, "id") : {}
                 const creationAttributes: DataHistoryCreationAttributes[] = instances.map(value => {
                     const creationAttribute: DataHistoryCreationAttributes = {
                         modelName: modelName,
