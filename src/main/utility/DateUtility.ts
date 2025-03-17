@@ -1,4 +1,13 @@
 abstract class DateUtility {
+    static getLastDateOfMonth(date: Date | string) {
+        if (typeof date == "string") {
+            const currentDate = new Date(date)
+            return new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).getDate()
+        }
+
+        return new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate()
+    }
+
     static getMonthName(monthNumber: number) {
         const monthsEn = [
             "January", "February", "March", "April", "May", "June",

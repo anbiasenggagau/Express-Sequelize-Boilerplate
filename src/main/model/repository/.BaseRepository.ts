@@ -83,17 +83,15 @@ type DeleteOption<T> = ({
     /**
      * Simulate force delete so it can trigger "ON DELETE" event
      * that are defined on foreign key while also keep the record being soft deleted.
-     * Transaction will be required if this option is true
     */
     simmulateForceDelete?: false
 } | {
     where: WhereOptions<T>
-    transaction: Transaction
+    transaction?: Transaction | null
     force?: false
     /**
      * Simulate force delete so it can trigger "ON DELETE" event
      * that are defined on foreign key while also keep the record being soft deleted
-     * Transaction will be required if this option is true
     */
     simmulateForceDelete: true
 }) & LoggingAttribute
@@ -282,7 +280,10 @@ abstract class BaseRepository<TModelInstance extends Model, TModelAttributes, TC
                 throw new ErrorHandler(500, "Unexpected behaviour. Model should implement paranoid")
 
             // Create save point
-            const savePoint = await this.model.sequelize.transaction({ transaction: DeleteOption.transaction })
+            let savePoint: Transaction | undefined = undefined
+            if (DeleteOption.transaction)
+                savePoint = await this.startTransaction({ transaction: DeleteOption.transaction })
+            else savePoint = await this.startTransaction()
 
             await this.model.destroy({
                 ...DeleteOption,

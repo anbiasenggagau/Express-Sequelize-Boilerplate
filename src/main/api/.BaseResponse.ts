@@ -31,13 +31,6 @@ class BaseResponse {
             const dataWithCount = dataOrUndefined as DataWithCount<T>
             const paginationResult = this.constructPagination(pagination, dataWithCount.count)
 
-            if (pagination.page > paginationResult.totalPages) {
-                return response.status(404).json({
-                    statusCode: 404,
-                    message: "Not Data Found",
-                })
-            }
-
             return response.status(200).json({
                 statusCode: 200,
                 message,
