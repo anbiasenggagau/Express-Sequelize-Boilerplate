@@ -11,7 +11,7 @@ interface LoggingInterface {
 let errorCon = false
 const transports: winston.transport[] = []
 transports.push(new LokiTransport({
-    host: process.env.LOGGING_URI!,
+    host: process.env.LOGGING_URI ?? "http://127.0.0.1:3100",
     json: true,
     batching: true,
     labels: { service_name: process.env.SERVICE_NAME },
