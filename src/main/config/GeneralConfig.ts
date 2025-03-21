@@ -7,8 +7,8 @@ const data = {
     SERVER_PORT: process.env.SERVER_PORT,
     REFRESH_TOKEN: process.env.REFRESH_TOKEN == "true",
     JWT_SECRET: process.env.JWT_SECRET!,
-    JWT_EXPIRATION: parseInt(process.env.JWT_EXPIRATION ?? "900"),
-    JWT_REFRESH_EXPIRATION: parseInt(process.env.JWT_REFRESH_EXPIRATION ?? "604800"),
+    JWT_EXPIRATION: parseInt(process.env.JWT_EXPIRATION ?? "7200"),
+    JWT_REFRESH_EXPIRATION: parseInt(process.env.JWT_REFRESH_EXPIRATION ?? "0"),
     NUMBER_OF_ALLOWED_SESSIONS: parseInt(process.env.NUMBER_OF_ALLOWED_SESSIONS ?? "1"),
     ENCRYPTION_SALT: parseInt(process.env.ENCRYPTION_SALT!),
 }

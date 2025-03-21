@@ -2,7 +2,7 @@ import jwt from "jsonwebtoken"
 import configData from "../config/GeneralConfig"
 import { TokenPayload } from "../middleware/Authentication"
 import RedisUtility from "./RedisUtility"
-import { v7 } from "uuid"
+import { v4 } from "uuid"
 import ErrorHandler from "../middleware/ErrorHandler"
 
 class SessionUtility {
@@ -35,11 +35,17 @@ class SessionUtility {
             let max = 0
             if (tokenNumber.length > 0) max = Math.max(...tokenNumber)
 
-            RedisUtility.SetEx({
-                key: "login=>" + tokenPayload.id + "=>" + (max + 1) + "=>" + (refreshToken),
-                value: JSON.stringify(tokenPayload),
-                ttl: configData.JWT_REFRESH_EXPIRATION
-            })
+            if (configData.JWT_REFRESH_EXPIRATION == 0)
+                RedisUtility.SetEx({
+                    key: "login=>" + tokenPayload.id + "=>" + (max + 1) + "=>" + (refreshToken),
+                    value: JSON.stringify(tokenPayload),
+                    ttl: configData.JWT_REFRESH_EXPIRATION
+                })
+            else
+                RedisUtility.Set({
+                    key: "login=>" + tokenPayload.id + "=>" + (max + 1) + "=>" + (refreshToken),
+                    value: JSON.stringify(tokenPayload),
+                })
         }
     }
 
@@ -50,15 +56,25 @@ class SessionUtility {
             const key = keys[0]
             const currentSession = JSON.parse(await RedisUtility.Get(key) as string)
             const newAccessToken = jwt.sign(currentSession, configData.JWT_SECRET, { expiresIn: configData.JWT_EXPIRATION })
-            const newRefreshToken = v7()
+            const newRefreshToken = v4()
             const newKeySession = key.split("=>")
             newKeySession[3] = newRefreshToken
-            RedisUtility.SetEx({
-                key: newKeySession.join("=>"),
-                value: JSON.stringify(currentSession),
-                ttl: configData.JWT_REFRESH_EXPIRATION,
-            })
-            const remainingTTL = (await RedisUtility.TTL(key))!
+
+            // If Refresh Token is 0
+            // It means that the refresh token will never expire
+            if (configData.JWT_REFRESH_EXPIRATION == 0)
+                RedisUtility.SetEx({
+                    key: newKeySession.join("=>"),
+                    value: JSON.stringify(currentSession),
+                    ttl: configData.JWT_REFRESH_EXPIRATION,
+                })
+            else
+                RedisUtility.Set({
+                    key: newKeySession.join("=>"),
+                    value: JSON.stringify(currentSession),
+                })
+
+            const remainingTTL = (await RedisUtility.TTL(key)) ?? 14400
             RedisUtility.Delete(key)
             RedisUtility.SetEx({
                 key: "blocked=>" + refreshToken,
@@ -96,7 +112,7 @@ class SessionUtility {
 
     static async revokeSession(refreshToken: string) {
         const currentSessionKey = (await RedisUtility.GetKeysFromPattern("login=>*" + refreshToken) as string[])[0]
-        const remainingTTL = (await RedisUtility.TTL(currentSessionKey))!
+        const remainingTTL = (await RedisUtility.TTL(currentSessionKey)) ?? 14400
         RedisUtility.Delete(currentSessionKey)
         RedisUtility.SetEx({
             key: "blocked=>" + refreshToken,

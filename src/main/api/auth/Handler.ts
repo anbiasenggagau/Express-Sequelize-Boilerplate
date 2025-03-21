@@ -4,7 +4,7 @@ import { LoginAttributeBody, } from "./Request"
 import ErrorHandler from "../../middleware/ErrorHandler"
 import configData from "../../config/GeneralConfig"
 import SessionUtility from "../../utility/SessionUtiliity"
-import { v7 } from "uuid"
+import { v4 } from "uuid"
 import { WhereOptions } from "sequelize"
 import { UserAttributes } from "../../model/entity/User"
 import { TokenPayload } from "../../middleware/Authentication"
@@ -40,7 +40,7 @@ class AuthHandler {
         const accessToken = SessionUtility.generateAccessToken(accessTokenObject)
 
         if (configData.REFRESH_TOKEN) {
-            const refreshToken = v7()
+            const refreshToken = v4()
             SessionUtility.insertRefreshLoginToken(refreshToken, accessTokenObject)
             return { accessToken, refreshToken }
         }
