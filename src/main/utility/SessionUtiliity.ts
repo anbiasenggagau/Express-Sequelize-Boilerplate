@@ -4,6 +4,7 @@ import { TokenPayload } from "../middleware/Authentication"
 import RedisUtility from "./RedisUtility"
 import { v4 } from "uuid"
 import ErrorHandler from "../middleware/ErrorHandler"
+import Logging from "../config/LoggingConfig"
 
 class SessionUtility {
     static generateAccessToken(tokenPayload: Omit<TokenPayload, "exp" | "iat">) {
@@ -99,6 +100,7 @@ class SessionUtility {
             }
             return { valid: true, message: "" }
         } catch (error) {
+            Logging.error("Error while checking blocked refresh token:", error)
             throw new ErrorHandler(500)
         }
     }
