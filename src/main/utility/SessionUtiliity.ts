@@ -35,7 +35,7 @@ class SessionUtility {
             let max = 0
             if (tokenNumber.length > 0) max = Math.max(...tokenNumber)
 
-            if (configData.JWT_REFRESH_EXPIRATION == 0)
+            if (configData.JWT_REFRESH_EXPIRATION != 0)
                 RedisUtility.SetEx({
                     key: "login=>" + tokenPayload.id + "=>" + (max + 1) + "=>" + (refreshToken),
                     value: JSON.stringify(tokenPayload),
@@ -62,7 +62,7 @@ class SessionUtility {
 
             // If Refresh Token is 0
             // It means that the refresh token will never expire
-            if (configData.JWT_REFRESH_EXPIRATION == 0)
+            if (configData.JWT_REFRESH_EXPIRATION != 0)
                 RedisUtility.SetEx({
                     key: newKeySession.join("=>"),
                     value: JSON.stringify(currentSession),
