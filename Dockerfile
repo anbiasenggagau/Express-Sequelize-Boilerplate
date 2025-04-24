@@ -1,4 +1,4 @@
-FROM node:20.17.0-alpine3.20 AS builder
+FROM node:23.10-bookworm-slim AS builder
 
 WORKDIR /app
 
@@ -8,7 +8,7 @@ RUN npm ci
 COPY . ./
 RUN npm run build
 
-FROM node:20.17.0-alpine3.20 AS final
+FROM node:23.10-bookworm-slim AS final
 
 WORKDIR /app
 

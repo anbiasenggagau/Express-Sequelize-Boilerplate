@@ -1,5 +1,4 @@
 services:
-
   boilerplate:
     build:
       context: .
@@ -9,14 +8,19 @@ services:
       - SERVICE_NAME=Express-Sequelize-Boilerplate
       - SERVER_PORT=3000
 
-      - MAIN_DB_HOST=postgres
+      - MAIN_DB_HOST=postgres-boilerplate
       - MAIN_DB_PORT=5432
       - MAIN_DB_NAME=postgres
       - MAIN_DB_USERNAME=anbiasenggagau
       - MAIN_DB_PASSWORD=supersecret
       - MAIN_DB_ENGINE=postgres
 
-      - REDIS_HOST=redis
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_PASSWORD=guest
+      - RABBITMQ_USERNAME=guest
+      - RABBITMQ_PORT=5672
+
+      - REDIS_HOST=redis-boilerplate
       - REDIS_PORT=6379
       - REDIS_PASSWORD=supersecret
 
@@ -26,10 +30,14 @@ services:
       - JWT_REFRESH_EXPIRATION=5d
       - NUMBER_OF_ALLOWED_SESSIONS=2
       - ENCRYPTION_SALT=10
+    depends_on:
+      - postgres
+      - redis
+      - rabbitmq
 
   postgres:
-    image: postgres:15.5
-    container_name: postgres
+    image: postgres:17.4-bookworm
+    container_name: postgres-boilerplate
     environment:
       - POSTGRES_USER=anbiasenggagau
       - POSTGRES_PASSWORD=supersecret
@@ -38,7 +46,14 @@ services:
 
   redis:
     image: redis:7.2.4
-    container_name: redis
+    container_name: redis-boilerplate
     command: redis-server --requirepass supersecret
     ports:
       - 6379:6379
+
+  rabbitmq:
+    image: rabbitmq:4-management-alpine
+    container_name: rabbitmq-boilerplate
+    ports:
+      - 5672:5672
+      - 15672:15672
