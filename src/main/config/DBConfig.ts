@@ -64,6 +64,9 @@ export const mainDb = new Sequelize({
                 const modelName = modelInstance.name
                 const dataBeforeMap = options.dataBefore ? ArrayUtility.transformIntoHashMap(options.dataBefore, "id") : {}
                 const creationAttributes: DataHistoryCreationAttributes[] = instances.map(value => {
+                    // Ignore if the instance is not created due to duplicate data
+                    if (!value.dataValues.id) return undefined
+
                     const creationAttribute: DataHistoryCreationAttributes = {
                         modelName: modelName,
                         idModelName: value.dataValues.id,

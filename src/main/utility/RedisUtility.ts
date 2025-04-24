@@ -12,6 +12,16 @@ class RedisUtility {
         this.client = await RedisInstance.authenticate()
     }
 
+    async Set(
+        data: {
+            key: string,
+            value: string
+        }
+    ) {
+        if (this.client != null) return await this.client.set(data.key, data.value)
+        return null
+    }
+
     async SetEx(
         data: {
             key: string,
@@ -73,7 +83,11 @@ class RedisUtility {
     }
 
     async TTL(key: string) {
-        if (this.client != null) return await this.client.TTL(key)
+        if (this.client != null) {
+            const result = await this.client.TTL(key)
+            return result > 0 ? result : null
+        }
+        return null
     }
 }
 
